@@ -99,7 +99,9 @@ CMD ["node", "dist/main"]
 ```
 
 ### ☸️ Kubernetes (k3s) Implementation
+
 ## Cluster Architecture
+```mermaid
 graph TB
     subgraph Kubernetes Cluster
         subgraph Namespace: ecommerce
@@ -122,9 +124,12 @@ graph TB
     end
     
     Client --> J
+```
 
 ## Deployment Strategy
+
 # Example: product-service deployment
+```
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -157,9 +162,12 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "500m"
+```
 
 ### 🔄 Communication Flow: User Places Order
+
 ## Synchronous Communication (gRPC)
+```mermaid
 sequenceDiagram
     participant Client
     participant Ingress as Ingress (k3s)
@@ -174,6 +182,7 @@ sequenceDiagram
     OrderService->>PaymentService: gRPC call - Process payment
     OrderService->>OrderService: Commit order to database
     OrderService->>Client: Order confirmation response
+```
 
 ## Asynchronous Communication (RabbitMQ)
 ```mermaid
