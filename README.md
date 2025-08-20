@@ -245,6 +245,7 @@ kubectl top pods -n ecommerce
 - **Authentication: JWT with role-based access control
 
 ### 📦 Project Structure
+```
 ecommerce-microservices/
 ├── services/
 │   ├── auth-service/
@@ -264,7 +265,7 @@ ecommerce-microservices/
 ├── docker-compose.yaml        # Local development
 ├── docker-compose.prod.yaml   # Production compose
 └── README.md
-
+```
 ### 📊 Kubernetes Features Implemented
 - ✅ Multi-container pods with sidecar patterns
 
