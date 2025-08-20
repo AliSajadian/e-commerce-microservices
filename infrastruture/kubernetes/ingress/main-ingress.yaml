@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: books-api-ingress
+  namespace: books-app
+  annotations:
+    # traefik.ingress.kubernetes.io/rewrite-target: /$2
+    traefik.ingress.kubernetes.io/router.middlewares: books-app-all-strip-prefixes@kubernetescrd
+    traefik.ingress.kubernetes.io/router.entrypoints: web # Add this line for HTTP (port 80)
+    # If you want HTTPS (port 443) as well, add:
+    # traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    # If you only want HTTPS:
+    # traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik # Specify the Ingress class if needed
+  rules: # - host: 172.28.71.143
+    - host: books-api.localhost
+      http: # <--- This is part of the SAME rule as the 'host'
+        paths:
+          - path: /auth # <--- Simple prefix path
+            pathType: Prefix # ImplementationSpecific 
+            backend:
+              service:
+                name: auth-service-svc
+                port:
+                  number: 80 # http-api # Route to the named HTTP port
+
+          - path: /books 
+          # - path: /books/(.*) #/health(/|$)(.*)
+            pathType: Prefix # ImplementationSpecific #Prefix
+            backend:
+              service:
+                name: books-service-svc
+                port:
+                  number: 8001 # http-api
+
+          # Route /favorites/* -> /* (strip /favorites prefix)
+          - path: /favorites
+          # - path: /favorites/(.*) #/health(/|$)(.*)
+            pathType: Prefix # ImplementationSpecific #Prefix
+            backend:
+              service:
+                name: favorites-service-svc
+                port:
+                  number: 8002 #http-api
+

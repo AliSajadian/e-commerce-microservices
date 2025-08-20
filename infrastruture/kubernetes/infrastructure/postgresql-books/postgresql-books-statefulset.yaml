@@ -1,0 +1,50 @@
+# PostgreSQL for Books Service (similar structure, adjust names and values)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-books-ss
+  namespace: books-app
+spec:
+  serviceName: "postgresql-books-svc"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-books
+  template:
+    metadata:
+      labels:
+        app: postgres-books
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17
+          env:
+            - name: POSTGRES_DB
+              value: "db_books"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_BOOKS_PASSWORD
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-books-storage
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "200m"
+            limits:
+              memory: "124Mi"
+              cpu: "400m"
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-books-storage
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 100Mi

@@ -1,0 +1,15 @@
+# Service for RabbitMQ
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-public-svc
+  namespace: books-app
+spec:
+  selector:
+    # This selector must match the labels on your RabbitMQ pods
+    app: rabbitmq
+  ports:
+    - name: amqp
+      protocol: TCP
+      port: 5672
+      targetPort: 5672

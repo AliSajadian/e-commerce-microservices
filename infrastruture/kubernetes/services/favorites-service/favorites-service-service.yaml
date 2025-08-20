@@ -1,0 +1,16 @@
+# Service for Favorites Service (No external exposure needed)
+apiVersion: v1
+kind: Service
+metadata:
+  name: favorites-service-svc
+  namespace: books-app
+spec:
+  selector:
+    app: favorites-service
+  ports:
+    - name: http-api
+      protocol: TCP
+      port: 8002 # Assuming a simple health check endpoint
+      targetPort: 8000 # Container's HTTP port
+  type: ClusterIP
+  

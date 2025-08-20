@@ -1,0 +1,46 @@
+{
+    "scripts": {
+        "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
+        "build": "nest build",
+        "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+        "start": "nest start",
+        "start:dev": "nest start --watch",
+        "start:debug": "nest start --debug --watch",
+        "start:prod": "node dist/main",
+        "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+        "migrate:generate": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate src/migrations/PaymenyMigration --dataSource src/config/datasource.ts",
+        "migrate:run": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run --dataSource src/config/datasource.ts",
+        "migrate:revert": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert --dataSource src/config/datasource.ts",
+        "migrate:show": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:show --dataSource src/config/datasource.ts"
+    },
+    "dependencies": {
+        "@grpc/grpc-js": "^1.13.4",
+        "@nestjs/common": "^11.1.5",
+        "@nestjs/config": "^4.0.2",
+        "@nestjs/core": "^11.1.5",
+        "@nestjs/jwt": "^11.0.0",
+        "@nestjs/microservices": "^11.1.5",
+        "@nestjs/passport": "^11.0.5",
+        "@nestjs/platform-express": "^11.1.5",
+        "@nestjs/platform-socket.io": "^11.1.5",
+        "@nestjs/swagger": "^11.2.0",
+        "@nestjs/typeorm": "^11.0.0",
+        "class-transformer": "^0.5.1",
+        "class-validator": "^0.14.2",
+        "dotenv": "^17.2.1",
+        "passport-jwt": "^4.0.1",
+        "pg": "^8.16.3",
+        "rxjs": "^7.8.2",
+        "swagger-ui-express": "^5.0.1",
+        "typeorm": "^0.3.25"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.3",
+        "@types/node": "^24.2.0",
+        "@types/passport-jwt": "^4.0.1",
+        "ts-node": "^10.9.2",
+        "tsconfig-paths": "^4.2.0",
+        "typeorm-cli": "^1.0.7",
+        "typescript": "^5.9.2"
+    }
+}

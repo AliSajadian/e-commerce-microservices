@@ -1,0 +1,11 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: all-strip-prefixes # Rename if you want, or just update auth-strip-prefix
+  namespace: books-app
+spec:
+  stripPrefix:
+    prefixes:
+      - /auth
+      - /books
+      - /favorites

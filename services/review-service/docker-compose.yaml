@@ -1,0 +1,89 @@
+services:
+  db-auth:
+    image: postgres:17
+    container_name: auth_service_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: db_auth
+    networks:
+      - microservices_network  # Best practice: explicitly add it to the same network
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always  # Best practice: restart the container if it fails
+    healthcheck: 
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    container_name: redis_service
+    networks:
+      - microservices_network  # Best practice: explicitly add it to the same network
+    ports:
+      - "6379:6379"
+    restart: always  # Best practice: restart the container if it fails
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine # Uses RabbitMQ with management UI
+    container_name: rabbitmq
+    hostname: rabbitmq
+    networks:
+      - microservices_network
+    ports:
+      - "5672:5672" # AMQP protocol port
+      - "15672:15672" # Management UI port (access at http://localhost:15672, guest/guest)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth:
+    image: auth_service_image
+    container_name: auth_service
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db-auth:
+        condition: service_healthy # <--- Wait for DB to be healthy
+      redis:
+        condition: service_started # No healthcheck for redis, so just service_started is fine
+      rabbitmq:
+        condition: service_healthy # <--- Wait for RabbitMQ to be healthy
+    env_file:
+    - .env.docker
+    environment:
+      ASYNC_DATABASE_URL: postgresql+asyncpg://postgres:admin@db-auth:5432/db_auth
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/ # Use 'rabbitmq' as hostname for Docker internal networking
+      RABBITMQ_USER: guest
+      RABBITMQ_PASS: guest
+      USER_EVENTS_EXCHANGE_NAME: user_events_exchange
+    networks:
+      - microservices_network
+    ports:
+      - "8000:8000"    # HTTP/REST API
+      - "50051:50051"  # gRPC
+    volumes:
+      - .:/app
+    working_dir: /app
+    restart: always  # Best practice: restart the container if it fails
+
+networks:
+  microservices_network:
+    external: true
+  default:
+    driver: bridge  # Explicitly set default network type
+    # enable_ipv6: false  # Disable IPv6 for the default network
+
+volumes:
+  postgres_data:
+    driver: local  # Explicitly define volume driver

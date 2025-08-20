@@ -1,0 +1,14 @@
+# Service for Favorites Service PostgreSQL
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-favorites-svc
+  namespace: books-app
+spec:
+  selector:
+    app: postgres-favorites
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  clusterIP: None

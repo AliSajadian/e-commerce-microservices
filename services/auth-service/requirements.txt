@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+asyncpg
+psycopg2-binary  # Often useful for Alembic migrations, even with async SQLAlchemy
+alembic
+pydantic-settings
+slowapi 
+passlib[bcrypt] 
+python-jose[cryptography] 
+redis
+black 

@@ -1,0 +1,50 @@
+# PostgreSQL for Auth Service
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-auth-ss
+  namespace: books-app
+spec:
+  serviceName: "postgresql-auth-svc" # Must match the service name
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-auth
+  template:
+    metadata:
+      labels:
+        app: postgres-auth
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17 # Use a specific version
+          env:
+            - name: POSTGRES_DB
+              value: "db_auth"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_AUTH_PASSWORD
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-auth-storage
+              mountPath: /var/lib/postgresql/data
+          resources: # Crucial for your 16GB RAM
+            requests:
+              memory: "64Mi"
+              cpu: "200m"
+            limits:
+              memory: "124Mi"
+              cpu: "400m"
+  volumeClaimTemplates: # This links to the PVC
+    - metadata:
+        name: postgres-auth-storage
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 100Mi

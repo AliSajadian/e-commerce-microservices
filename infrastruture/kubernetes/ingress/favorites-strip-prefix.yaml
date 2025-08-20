@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: favorites-strip-prefix
+  namespace: books-app
+spec:
+  stripPrefix:
+    prefixes:
+      - /favorites

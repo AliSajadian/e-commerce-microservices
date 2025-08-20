@@ -1,0 +1,15 @@
+# Service for Email Service (HTTP)
+apiVersion: v1
+kind: Service
+metadata:
+  name: email-service-svc
+  namespace: books-app
+spec:
+  selector:
+    app: email-service
+  ports:
+    - name: http-api
+      protocol: TCP
+      port: 8003 # Internal service port for HTTP
+      targetPort: 8003 # Container's HTTP port
+  type: ClusterIP

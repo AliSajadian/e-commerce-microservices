@@ -1,0 +1,50 @@
+# PostgreSQL for Favorites Service (similar structure, adjust names and values)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-favorites-ss
+  namespace: books-app
+spec:
+  serviceName: "postgresql-favorites-svc"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-favorites
+  template:
+    metadata:
+      labels:
+        app: postgres-favorites
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17
+          env:
+            - name: POSTGRES_DB
+              value: "db_favorites"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_FAVORITES_PASSWORD
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-favorites-storage
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "200m"
+            limits:
+              memory: "124Mi"
+              cpu: "400m"
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-favorites-storage
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 100Mi

@@ -1,0 +1,66 @@
+
+# Books Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: books-service-deploy
+  namespace: books-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: books-service
+  template:
+    metadata:
+      labels:
+        app: books-service
+    spec:
+      containers:
+        - name: books-service
+          image: docker.io/library/books_service_image:latest # Replace with your image
+          imagePullPolicy: Never
+          ports:
+            - name: http-api
+              containerPort: 8000 # Your FastAPI HTTP port
+            - name: grpc-api
+              containerPort: 50052 # Your gRPC port
+          env:
+            - name: POSTGRES_DB
+              value: "db_books"
+            - name: POSTGRES_HOST
+              value: "postgresql-books-svc"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_BOOKS_PASSWORD   
+            - name: DATABASE_URL        
+              value: "postgresql+psycopg2://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)"
+            - name: ASYNC_DATABASE_URL
+              value: "postgresql+asyncpg://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)"
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http-api
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http-api
+            initialDelaySeconds: 15
+            periodSeconds: 5

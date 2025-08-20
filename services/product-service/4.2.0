@@ -1,0 +1,5 @@
+Collecting redis
+  Downloading redis-6.2.0-py3-none-any.whl.metadata (10 kB)
+Downloading redis-6.2.0-py3-none-any.whl (278 kB)
+Installing collected packages: redis
+Successfully installed redis-6.2.0

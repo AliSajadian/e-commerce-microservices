@@ -1,0 +1,47 @@
+services:
+  db-books:
+    image: postgres:17
+    container_name: product_service_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: db_product
+    networks:
+      - microservices_network  # Best practice: explicitly add it to the same network
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always  # Best practice: restart the container if it fails
+
+  product:
+    image: product_service_image
+    container_name: product_service
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db-product
+    environment:
+      ASYNC_DATABASE_URL: postgresql+asyncpg://postgres:admin@db-product:5432/db_product
+    networks:
+      - default
+      - microservices_network
+    ports:
+      - "8000:8000"    # HTTP/REST API
+      - "50051:50051"  # gRPC
+    volumes:
+      - .:/app
+    working_dir: /app
+    restart: always  # Best practice: restart the container if it fails
+
+networks:
+  microservices_network:
+    external: true
+  default:
+    driver: bridge  # Explicitly set default network type
+    # enable_ipv6: false  # Disable IPv6 for the default network
+
+volumes:
+  postgres_data:
+    driver: local  # Explicitly define volume driver

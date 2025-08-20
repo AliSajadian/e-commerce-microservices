@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: books-app
+data:
+  # Add other non-sensitive configurations here
+  # ASYNC_DATABASE_URL: "postgresql+asyncpg://postgres:admin@postgresql-auth-svc:5432/db_auth"
+  ALGORITHM: "HS256"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+  REFRESH_EXPIRE_DAYS: "40"
+
+  REDIS_HOST: redis-public-svc
+  REDIS_PORT: "6379"
+
+  RABBITMQ_HOST: rabbitmq-svc
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_USER: "guest"
+  RABBITMQ_PASS: "guest"
+  RABBITMQ_URL: "amqp://guest:guest@rabbitmq-public-svc:5672/"
+  USER_EVENTS_EXCHANGE_NAME: "user.events"

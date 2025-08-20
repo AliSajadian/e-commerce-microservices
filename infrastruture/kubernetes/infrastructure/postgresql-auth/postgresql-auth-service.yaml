@@ -1,0 +1,14 @@
+# Service for Auth Service PostgreSQL
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-auth-svc
+  namespace: books-app
+spec:
+  selector:
+    app: postgres-auth # Matches the StatefulSet's labels
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  clusterIP: None # Headless service for StatefulSet

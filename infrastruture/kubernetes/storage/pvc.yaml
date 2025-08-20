@@ -1,0 +1,64 @@
+# For Auth Service PostgreSQL
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-auth-pvc
+  namespace: books-app
+spec:
+  accessModes:
+    - ReadWriteOnce # Can be mounted as read-write by a single node
+  resources:
+    requests:
+      storage: 0.1Gi # Request 5 GB of storage
+---
+# For Books Service PostgreSQL
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-books-pvc
+  namespace: books-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 0.1Gi
+---
+# For Favorites Service PostgreSQL
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-favorites-pvc
+  namespace: books-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 0.1Gi
+---
+# For Redis
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: books-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 0.1Gi # Redis usually needs less storage
+---
+# For RabbitMQ
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rabbitmq-pvc
+  namespace: books-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi # RabbitMQ can accumulate messages

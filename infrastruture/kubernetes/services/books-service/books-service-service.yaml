@@ -1,0 +1,19 @@
+# Service for Books Service (HTTP & gRPC)
+apiVersion: v1
+kind: Service
+metadata:
+  name: books-service-svc
+  namespace: books-app
+spec:
+  selector:
+    app: books-service
+  ports:
+    - name: http-api
+      protocol: TCP
+      port: 8001 # Internal service port for HTTP
+      targetPort: 8000 # Container's HTTP port
+    - name: grpc-api
+      protocol: TCP
+      port: 50052
+      targetPort: 50052
+  type: ClusterIP

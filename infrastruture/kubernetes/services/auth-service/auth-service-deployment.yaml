@@ -1,0 +1,66 @@
+
+# Auth Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service-deploy
+  namespace: books-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: docker.io/library/auth_service_image:latest # Replace with your image
+          imagePullPolicy: Never
+          ports:
+            - name: http-api
+              containerPort: 8000 # Your FastAPI HTTP port
+            - name: grpc-api
+              containerPort: 50051 # Your gRPC port
+          env:
+            - name: POSTGRES_DB
+              value: "db_auth"
+            - name: POSTGRES_HOST
+              value: "postgresql-auth-svc"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_AUTH_PASSWORD   
+            - name: DATABASE_URL        
+              value: "postgresql+psycopg2://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)"
+            - name: ASYNC_DATABASE_URL
+              value: "postgresql+asyncpg://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)"
+          envFrom:
+            - configMapRef:
+                name: app-config # Reference to the ConfigMap         
+            - secretRef:
+                name: app-secrets
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http-api
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http-api
+            initialDelaySeconds: 15
+            periodSeconds: 5

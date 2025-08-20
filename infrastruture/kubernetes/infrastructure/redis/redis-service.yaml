@@ -1,0 +1,14 @@
+# Service for Redis
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-svc
+  namespace: books-app
+spec:
+  selector:
+    app: redis
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
+  clusterIP: None # Headless service for StatefulSet
