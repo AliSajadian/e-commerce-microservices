@@ -176,6 +176,7 @@ sequenceDiagram
     OrderService->>Client: Order confirmation response
 
 ## Asynchronous Communication (RabbitMQ)
+```mermaid
 sequenceDiagram
     participant OrderService
     participant RabbitMQ
@@ -186,8 +187,9 @@ sequenceDiagram
     RabbitMQ->>NotificationService: Deliver event for processing
     OrderService->>RabbitMQ: Publish "Order Confirmed" event
     RabbitMQ->>ProductService: Deliver event for inventory finalization
-
+```
 ### 🚀 Deployment Workflow
+
 ## 1. Local Development
 ```
 # Build and run with Docker Compose
@@ -197,6 +199,7 @@ docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 cd services/auth-service
 docker-compose up --build
 ```
+
 ## 2. Build Docker Images
 ```
 # Build all services
@@ -205,6 +208,7 @@ docker-compose build
 # Build specific service
 docker build -t auth-service:latest ./services/auth-service
 ```
+
 ## 3. Deploy to k3s
 ```
 # Apply Kubernetes manifests
@@ -216,6 +220,7 @@ kubectl apply -f k8s/deployments/
 # Or use Helm charts (if available)
 helm install ecommerce ./charts/ecommerce
 ```
+
 ## 4. Monitoring and Logging
 ```
 # Check pod status
@@ -227,6 +232,7 @@ kubectl logs -f deployment/auth-service -n ecommerce
 # Monitor resources
 kubectl top pods -n ecommerce
 ```
+
 ### 🛠️ Technology Stack
 - **Containerization: Docker, Docker Compose
 
@@ -266,6 +272,7 @@ ecommerce-microservices/
 ├── docker-compose.prod.yaml   # Production compose
 └── README.md
 ```
+
 ### 📊 Kubernetes Features Implemented
 - ✅ Multi-container pods with sidecar patterns
 
@@ -286,6 +293,7 @@ ecommerce-microservices/
 - ✅ StatefulSets for stateful services
 
 ### 🚀 Getting Started
+
 ## Prerequisites
 - 🐳 Docker Desktop
 
@@ -308,6 +316,7 @@ kubectl apply -f k8s/namespaces.yaml
 kubectl apply -f k8s/configs/database-config.yaml
 kubectl apply -f k8s/services/auth-service.yaml
 ```
+
 ## Access Services
 ```
 # Get ingress endpoints
@@ -316,6 +325,7 @@ kubectl get ingress -n ecommerce
 # Port forward for local access
 kubectl port-forward svc/auth-service 8000:8000 -n ecommerce
 ```
+
 ### 🔒 Production Considerations
 - SSL/TLS termination at ingress
 
