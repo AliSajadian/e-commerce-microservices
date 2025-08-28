@@ -18,7 +18,7 @@ class ProductImage(Base, Timestamp):
     is_main: Mapped[bool] = mapped_column(Boolean, default=False)
     
     # This is the foreign key for the one-to-many relationship
-    product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('products.id'))
+    product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('products.id'), nullable=False, index=True)
     
     # This is the relationship back to the Product model
     # product: Mapped["Product"] = relationship(back_populates="images")

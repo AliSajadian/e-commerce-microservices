@@ -1,15 +1,17 @@
 import logging
-from pydantic import ValidationError
-from sqlalchemy.exc import NoResultFound
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
-from sqlalchemy.orm import selectinload # For eagerly loading relationships
-from typing import List, Optional
 import uuid
+from typing import List, Optional
+from sqlalchemy import select, delete
+from sqlalchemy.exc import NoResultFound, IntegrityError, SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload # For eagerly loading relationships
 
+from . import CategoryCRUD, InventoryCRUD, TagCRUD
 from app.product.models import Product, Category, Tag, Inventory, ProductImage
-from app.product.schemas import ProductCreateSchema, ProductUpdateSchema, ProductSchema, InventorySchema, ProductImageSchema
-from ..exceptions import ObjectVerificationError, ObjectCreationError, ObjectNotFoundError
+from app.product.schemas import ProductCreateSchema, ProductUpdateSchema, \
+    ProductSchema, InventorySchema
+from ...api.exceptions import BaseError, DatabaseError, DatabaseIntegrityError, \
+    InternalServerError, NotFoundError
 
 # ============================================================================
 # Product API Services
@@ -17,11 +19,17 @@ from ..exceptions import ObjectVerificationError, ObjectCreationError, ObjectNot
 
 class ProductCRUD:
     """ ===============================
-          Producs CRUD Services Class
+          Product CRUD Services Class
         ===============================
     """
-    def __init__(self, db_session: AsyncSession):
+    def __init__(self, db_session: AsyncSession, 
+                 category_service: CategoryCRUD, 
+                 inventory_service: InventoryCRUD,
+                 tag_service: TagCRUD):
         self.db_session = db_session
+        self.category_service  = category_service
+        self.inventory_service  = inventory_service
+        self.tag_service = tag_service
 
     async def create_product(self, product_in: ProductCreateSchema) -> ProductSchema:
         """
@@ -73,17 +81,32 @@ class ProductCRUD:
             self.db_session.add(db_product)
             await self.db_session.commit()
             await self.db_session.refresh(db_product, attribute_names=["inventory", "images", "categories", "tags"])
+            
             logging.info(f"Created new product.")
             return db_product
         
-        except ValidationError as e:
-            logging.error(f"Failed to the product data verification. Error: {str(e)}")
+        except BaseError:
+            # Re-raise NotFoundError, ConflictError as-are
             await self.db_session.rollback()
-            raise ObjectVerificationError("Category", str(e))
+            raise
+          
+        except IntegrityError as e:
+            # Handle database constraint violations
+            await self.db_session.rollback()
+            logging.error(f"Database integrity error creating category: {str(e)}")
+            raise DatabaseIntegrityError(str(e))
+        
+        except SQLAlchemyError as e:
+            # Handle other database errors
+            await self.db_session.rollback()
+            logging.error(f"Database error creating category: {str(e)}")
+            raise DatabaseError(str(e))
+        
         except Exception as e:
-            logging.error(f"Failed to create product. Error: {str(e)}")
+            # Handle unexpected errors
             await self.db_session.rollback()
-            raise ObjectCreationError(str(e)) 
+            logging.error(f"Unexpected error creating category: {str(e)}")
+            raise InternalServerError(str(e))
 
     async def read_all_products(self, skip: int = 0, limit: int = 100) -> List[ProductSchema]:
         """
@@ -118,42 +141,55 @@ class ProductCRUD:
 
         except NoResultFound:
             logging.warning(f"Product with id {product_id} not found.")
-            raise ObjectNotFoundError("Product", product_id)
-
-    async def read_images_by_product_id(self, product_id: uuid.UUID) -> List[ProductImageSchema]:
+            raise None
+            
+    async def read_products_by_category_id(self, category_id: int) -> ProductSchema:
         """
-        Get product images by product id
+        Get category products by category id
         """
-        # First check if the product image exists
-        product_stmt = select(Product).filter(Product.id == product_id)
-        product_result = await self.db.execute(product_stmt)
-        product = product_result.scalar_one_or_none()
-
-        if not product:
-            logging.warning(f"Product with id {product_id} not found.")
-            raise ObjectNotFoundError("Product", product_id)
+        # First check if the category exists
+        category = await self.category_service.read_category_by_id(category_id)
+        if not category:
+            logging.warning(f"Category with id {category_id} not found.")
+            raise NotFoundError("Category", category_id)
         
-        # Product exists, now get product images
-        products_image_stmt = select(ProductImage).filter(ProductImage.product.id == product_id).order_by(ProductImage.id)
-        products_image_result = await self.db.execute(products_image_stmt)
-        product_images = products_image_result.scalars().all()
+        # Category exists, now get products
+        products_stmt = select(Product).filter(Product.category_id == category_id).order_by(Product.id)
+        products_result = await self.db_session.execute(products_stmt)
+        products = products_result.scalars().all()
         
-        logging.info(f"Retrieved {len(product_images)} images of product {product_id}.")
-        return product_images
-   
+        logging.info(f"Retrieved {len(products)} products of category {category_id}.")
+        return products   
+                
+    async def read_products_by_tag_id(self, tag_id: uuid.UUID)-> List[ProductSchema]:
+        """
+        Get tag by id
+        """
+        # First check if the tag exists
+        db_tag = self.tag_service.read_tag_by_id(tag_id)
+        if not db_tag:
+            logging.warning(f"Tag with id {tag_id} not found.")
+            raise NotFoundError("Tag", tag_id)
+        
+        # Tag exists, now get products
+        products_stmt = select(Product).join(Product.tags).filter(Tag.id == tag_id).order_by(Product.id)
+        products_result = await self.db_session.execute(products_stmt)
+        db_products = products_result.scalars().all()
+        
+        logging.info(f"Retrieved {len(db_products)} products of tag {tag_id}.")
+        return db_products
+            
     async def update_product(self, product_id: uuid.UUID, product_in: ProductUpdateSchema) -> Optional[ProductSchema]:
         """
         Updates an existing product.
         Note: This example only updates direct product fields.
         Updating categories/tags (add/remove) would require more complex logic.
         """
-        stmt = select(Product).where(Product.id == product_id)
-        result = await self.db_session.execute(stmt)
-        db_product = result.scalars().first()
-
+        # check product exists
+        db_product = self.read_product_by_id(product_id)
         if not db_product:
             logging.warning(f"Product with id {product_id} not found.")
-            raise ObjectNotFoundError("Product", product_id)
+            raise NotFoundError("Product", product_id)
 
         # Update direct fields
         for field, value in product_in.model_dump(exclude_unset=True).items():
@@ -162,36 +198,36 @@ class ProductCRUD:
 
         # Handle images update (example: replace all images)
         if product_in.images is not None:
-                # Get current images from the database
-                current_images = {img.url: img for img in db_product.images}
+            # Get current images from the database
+            current_images = {img.url: img for img in db_product.images}
+            
+            # Get incoming images from the request
+            incoming_images_urls = {img.url for img in product_in.images}
+            
+            # Determine images to delete
+            images_to_delete = [
+                img for url, img in current_images.items() 
+                if url not in incoming_images_urls
+            ]
+            for img in images_to_delete:
+                await self.db_session.delete(img)
                 
-                # Get incoming images from the request
-                incoming_images_urls = {img.url for img in product_in.images}
-                
-                # Determine images to delete
-                images_to_delete = [
-                    img for url, img in current_images.items() 
-                    if url not in incoming_images_urls
-                ]
-                for img in images_to_delete:
-                    await self.db_session.delete(img)
-                    
-                # Determine images to add or update
-                for img_data in product_in.images:
-                    if img_data.url in current_images:
-                        # Update existing image
-                        db_image = current_images[img_data.url]
-                        db_image.alt_text = img_data.alt_text
-                        db_image.is_main = img_data.is_main
-                    else:
-                        # Add new image
-                        new_image = ProductImage(
-                            product=db_product,
-                            url=img_data.url,
-                            alt_text=img_data.alt_text,
-                            is_main=img_data.is_main
-                        )
-                        self.db_session.add(new_image)
+            # Determine images to add or update
+            for img_data in product_in.images:
+                if img_data.url in current_images:
+                    # Update existing image
+                    db_image = current_images[img_data.url]
+                    db_image.alt_text = img_data.alt_text
+                    db_image.is_main = img_data.is_main
+                else:
+                    # Add new image
+                    new_image = ProductImage(
+                        product=db_product,
+                        url=img_data.url,
+                        alt_text=img_data.alt_text,
+                        is_main=img_data.is_main
+                    )
+                    self.db_session.add(new_image)
 
         # Handle categories update (example: replace all categories)
         if product_in.category_ids is not None:
@@ -221,13 +257,15 @@ class ProductCRUD:
         Updates the stock quantity of a product's inventory.
         quantity_change can be positive (add stock) or negative (remove stock).
         """
-        stmt = select(Inventory).where(Inventory.product_id == product_id)
-        result = await self.db_session.execute(stmt)
-        db_inventory = result.scalars().first()
+        # First, get the product to ensure it exists and to return the full ProductResponse
+        product = await self.read_product_by_id(product_id)
+        if not product:
+            raise NotFoundError("Product", product_id)
 
+        db_inventory: InventorySchema = self.inventory_service._read_inventory_by_product_id(product_id)
         if not db_inventory:
-            logging.warning(f"Product with id {product_id} not found.")
-            raise ObjectNotFoundError("Product", product_id)
+            logging.warning(f"Inventory with id {product_id} not found.")
+            raise NotFoundError("Inventory", product_id, "product_id")
         
         db_inventory.quantity += quantity_change
         if db_inventory.quantity < 0:
@@ -237,6 +275,8 @@ class ProductCRUD:
         
         await self.db_session.commit()
         await self.db_session.refresh(db_inventory)
+        # Refresh the product object to reflect the updated inventory quantity
+        await self.db_session.refresh(product, attribute_names=["inventory"])
         logging.info(f"Successfully updated product stock {product_id}.")
         return db_inventory
     
@@ -246,11 +286,16 @@ class ProductCRUD:
         Due to cascade="all, delete-orphan" on inventory relationship,
         the associated inventory record will also be deleted.
         """
-        stmt = delete(Product).where(Product.id == product_id)
-        result = await self.db_session.execute(stmt)
+        # check product exists
+        db_product = self.read_product_by_id(product_id)
+        if not db_product:
+            return False
+
+        await self.db_session.delete(db_product)
         await self.db_session.commit()
-        logging.info(f"Successfully deleted product_id {product_id}")
-        return result.rowcount > 0 # Returns True if a row was deleted
+
+        logging.info(f"Successfully deleted product {product_id}.")
+        return True
     
     
     

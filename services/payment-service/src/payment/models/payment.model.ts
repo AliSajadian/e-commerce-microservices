@@ -8,6 +8,14 @@ export enum PaymentStatus {
   CANCELED = 'canceled',
   REFUNDED = 'refunded',
 }
+// export const PaymentStatus = {
+//   PENDING: 'pending',
+//   SUCCEEDED: 'succeeded',
+//   FAILED: 'failed',
+//   CANCELED: 'canceled',
+//   REFUNDED: 'refunded',
+// } as const;
+// export type PaymentStatus = typeof PaymentStatus[keyof typeof PaymentStatus];
 
 export enum PaymentMethod {
   CREDIT_CARD = 'credit_card',
@@ -15,6 +23,14 @@ export enum PaymentMethod {
   BANK_TRANSFER = 'bank_transfer',
   // Add more as needed
 }
+// export const PaymentMethod = {
+//   CREDIT_CARD: 'credit_card',
+//   PAYPAL: 'paypal',
+//   BANK_TRANSFER: 'bank_transfer',
+//   // Add more as needed
+// }
+// export type PaymentMethod = typeof PaymentMethod[keyof typeof PaymentMethod];
+
 
 @Entity('payments')
 export class Payment {
@@ -27,13 +43,15 @@ export class Payment {
   @Column({
     type: 'enum',
     enum: PaymentStatus,
+    // enum: Object.values(PaymentStatus),
     default: PaymentStatus.PENDING,
   })
-  status: PaymentStatus;
+  status: PaymentStatus; // Error: 'PaymentStatus' refers to a value, but is being used as a type here. Did you mean 'typeof PaymentStatus'
 
   @Column({
     type: 'enum',
     enum: PaymentMethod,
+    // enum: Object.values(PaymentMethod),
   })
   method: PaymentMethod;
 

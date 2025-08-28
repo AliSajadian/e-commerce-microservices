@@ -1,13 +1,16 @@
 import asyncio
 from contextlib import asynccontextmanager
+from http.client import HTTPException
 import logging
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 import app.product.models
 from app.grpc_server import start_grpc_server_background, stop_grpc_server_background
 from app.core.database import init_db_connection
 from .api.v1.routers import register_routes
+from .api.exceptions import validation_exception_handler, http_exception_handler, general_exception_handler
 
 # Configure logging at the top level
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -63,6 +66,11 @@ app = FastAPI(
     openapi_tags=tags_metadata,
     lifespan=lifespan
 )
+
+# Register custom exception handlers
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(Exception, general_exception_handler)
 
 # ... your other FastAPI routes and code ...
 @app.get("/")

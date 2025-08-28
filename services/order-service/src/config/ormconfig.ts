@@ -1,6 +1,10 @@
 import { DataSourceOptions } from 'typeorm';
 import * as path from 'path';
 
+// Get the environment to determine the file extension
+const isDevelopment = process.env.NODE_ENV === 'development';
+const fileExtension = isDevelopment ? 'ts' : 'js';
+
 // This is the single source of truth for all TypeORM configuration.
 export const ormConfig: DataSourceOptions = {
   type: 'postgres',
@@ -9,10 +13,15 @@ export const ormConfig: DataSourceOptions = {
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'admin',
   database: process.env.DB_NAME || 'db_order',
-  synchronize: false, // Recommended to be false in production
+  synchronize: isDevelopment, // Recommended to be false in production
   logging: true,
-  entities: [path.join(__dirname, '..', '**', '*.model.ts')],
-  migrations: [path.join(__dirname, 'migrations', '**', '*.ts')],
+  // entities: [path.join(__dirname, '..', '**', '*.model.ts')],
+  // migrations: [path.join(__dirname, 'migrations', '**', '*.ts')],
+
+  // Use a dynamic path that correctly points to .ts or .js files
+  entities: [path.join(__dirname, '..', '**', `*.model.${fileExtension}`)],
+  migrations: [path.join(__dirname, 'migrations', '**', `*.${fileExtension}`)],
+
 };
 
 // This is the separate CLI configuration object.

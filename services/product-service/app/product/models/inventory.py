@@ -1,5 +1,5 @@
 from __future__ import annotations
-from sqlalchemy import Integer, ForeignKey
+from sqlalchemy import Integer, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
@@ -17,6 +17,8 @@ class Inventory(Base, Timestamp):
         index=True
     )
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    reserved_quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    warehouse_location: Mapped[str] = mapped_column(String(255))
 
     # One-to-one relationship with the Product model
     product: Mapped["Product"] = relationship(back_populates="inventory") # type: ignore

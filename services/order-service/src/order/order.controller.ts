@@ -50,8 +50,8 @@ export class OrderController {
     return this.orderService.getOrderById(id);
   }
   
-  @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @Permissions('order:read')
+  // @UseGuards(JwtAuthGuard, PermissionsGuard)
+  // @Permissions('order:read')
   @Get()
   async findAll(): Promise<IOrder[]> {
     return this.orderService.getAllOrders();

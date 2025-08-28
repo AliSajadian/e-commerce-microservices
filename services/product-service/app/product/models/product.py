@@ -1,12 +1,11 @@
 from __future__ import annotations
 import uuid # Enable postponed evaluation of type annotations
-from sqlalchemy import Boolean, String, Float
+from sqlalchemy import Boolean, ForeignKey, String, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.core.database import Base
 from app.common.mixins import Timestamp
-from .category import product_category_association
 from .tag import product_tag_association
 
 class Product(Base, Timestamp):
@@ -18,6 +17,9 @@ class Product(Base, Timestamp):
     price: Mapped[float] = mapped_column(Float, nullable=False)
     sku: Mapped[String] = mapped_column(String, nullable=False, unique=True, index=True) # Stock Keeping Unit
     is_active: Mapped[Boolean] = mapped_column(Boolean, default=True) 
+
+    # Category relationship
+    category_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("product_categories.id"), nullable=False, index=True)
 
     # One-to-one relationship with Inventory
     inventory = relationship("Inventory", back_populates="product")
@@ -34,9 +36,8 @@ class Product(Base, Timestamp):
     # )    
         
     # Many-to-many relationship with Category
-    categories = relationship("Category", secondary=product_category_association, lazy="selectin", back_populates="products")
+    category = relationship("Category", back_populates="products")
     # categories: Mapped[List["Category"]] = relationship(
-    #     secondary=product_category_association,
     #     back_populates="products"
     # )
 

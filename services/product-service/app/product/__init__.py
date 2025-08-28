@@ -1,2 +1,1 @@
-from .models import Product, Category, product_category_association, \
-                    Tag, product_tag_association, Inventory
+from .models import Product, Category, Tag, product_tag_association, Inventory

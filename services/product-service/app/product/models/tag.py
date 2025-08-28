@@ -11,7 +11,7 @@ from .associations import product_tag_association
 
 
 class Tag(Base, Timestamp):
-    __tablename__ = "tags"
+    __tablename__ = "product_tags"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, index=True)
@@ -19,7 +19,7 @@ class Tag(Base, Timestamp):
     # Many-to-many relationship with Product
     products: Mapped[List["Product"]] = relationship( # type: ignore
         secondary=product_tag_association,
-        back_populates="tags"
+        back_populates="product_tags"
     )
 
     def __repr__(self):

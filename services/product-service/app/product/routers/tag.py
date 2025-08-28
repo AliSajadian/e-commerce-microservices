@@ -27,7 +27,6 @@ async def create_tag(db: AsyncDbSession, tag_data: TagCreateSchema) -> TagSchema
     tag = await tag_services.create_tag(tag_data)
     return tag
 
-
 @routers.get("", response_model=List[TagSchema])
 async def get_all_tags(db: AsyncDbSession) -> List[TagSchema]:
     """API endpoint for listing all tag resources
@@ -35,7 +34,6 @@ async def get_all_tags(db: AsyncDbSession) -> List[TagSchema]:
     tag_services = TagCRUD(db)
     tags = await tag_services.read_all_tags()
     return tags
-
 
 @routers.get("/{tag_id}")
 async def get_tag_by_id(db: AsyncDbSession, 
@@ -53,7 +51,6 @@ async def get_tag_by_id(db: AsyncDbSession,
     tag_services = TagCRUD(db)
     tag = await tag_services.read_tag_by_id(tag_id)
     return tag
-
 
 @routers.patch("/{tag_id}")
 async def update_tag(db: AsyncDbSession, data: TagUpdateSchema, tag_id: uuid.UUID = Path(..., description="The tag id, you want to update: ")) -> TagSchema:
@@ -75,8 +72,7 @@ async def update_tag(db: AsyncDbSession, data: TagUpdateSchema, tag_id: uuid.UUI
     )
     return tag
 
-
-@routers.delete("/{tag_id}", status_code=HTTPStatus.NO_CONTENT)
+@routers.delete("/{tag_id}", status_code=HTTPStatus.OK)
 async def delete_tag(db: AsyncDbSession, tag_id: uuid.UUID = Path(..., description="The tag id, you want to delete: ")) -> None:
     """Delete tag by id
 

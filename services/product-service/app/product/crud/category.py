@@ -1,15 +1,16 @@
 import logging
+import re
+from uuid import UUID
 from typing import List
-from pydantic import ValidationError
-from sqlalchemy import UUID, select
+from sqlalchemy import select
 from sqlalchemy.orm import joinedload
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-# from sqlalchemy.exc import IntegrityError
 
-from ..models import Category, Product
-from ..schemas import CategorySchema, ProductSchema, CategoryCreateSchema
-from ..exceptions import ObjectVerificationError, ObjectCreationError, ObjectNotFoundError
+from ..models import Category
+from ..schemas import CategorySchema, CategoryCreateSchema, CategoryUpdateSchema
+from ...api.exceptions import ConflictError, NotFoundError, \
+    InternalServerError, DatabaseError, DatabaseIntegrityError
 
 # ============================================================================
 # Category API Services
@@ -23,27 +24,72 @@ class CategoryCRUD:
     def __init__(self, db_session: AsyncSession):
         self.db_session = db_session
 
-    async def create_category(self, data: CategoryCreateSchema) -> CategorySchema:
+    async def create_category(self, category_data: CategoryCreateSchema) -> CategorySchema:
         """
         Create category object
         """
-        try:
-            self.db_session.add(data)
-            category = await self.db_session.commit()
-            await self.db_session.refresh(data)
-            
-            logging.info(f"Created new category.")
-            return category
-    
-        except ValidationError as e:
-            logging.error(f"Failed to the category data verification. Error: {str(e)}")
-            await self.db_session.rollback()
-            raise ObjectVerificationError("Category", str(e))
-        except Exception as e:
-            logging.error(f"Failed to create category. Error: {str(e)}")
-            await self.db_session.rollback()
-            raise ObjectCreationError(str(e))        
+        try:      
+            # 1. Input validation - check if category exists
+            db_category = self.read_category_by_name(category_name=category_data.name)
+            if db_category:
+                raise ConflictError("Category", category_data.name, "name")
+                
+            # 2. Validate parent category if provided
+            if category_data.parent_id:
+                parent_category = await self.read_category_by_id(category_data.parent_id)
+                if not parent_category:
+                    NotFoundError("Category", category_data.parent_id, "parent_id")
+                    
+            # 3. Create the category object
+            slug = self._slugify(category_data.name)
 
+            new_category = CategorySchema(
+                name=category_data.name, 
+                slug=slug,
+                parent_id=category_data.parent_id if category_data.parent_id else None
+            )
+            
+            # 4. Database operations with proper transaction handling
+            self.db_session.add(new_category)
+            category = await self.db_session.commit()
+            await self.db_session.refresh(new_category)
+            
+            # 5. Logging with proper context
+            logging.info(
+                f"Created new category: {new_category.name} (ID: {new_category.id})"
+            )
+            
+            # 6. Return Pydantic schema for API response
+            return CategorySchema.model_validate(category)
+ 
+        except ConflictError:
+            # Re-raise ConflictError as-is
+            await self.db_session.rollback()
+            raise
+          
+        except NotFoundError:
+            # Re-raise NotFoundError as-is
+            await self.db_session.rollback()
+            raise
+        
+        except IntegrityError as e:
+            # Handle database constraint violations
+            await self.db_session.rollback()
+            logging.error(f"Database integrity error creating category: {str(e)}")
+            raise DatabaseIntegrityError(str(e))
+        
+        except SQLAlchemyError as e:
+            # Handle other database errors
+            await self.db_session.rollback()
+            logging.error(f"Database error creating category: {str(e)}")
+            raise DatabaseError(str(e))
+        
+        except Exception as e:
+            # Handle unexpected errors
+            await self.db_session.rollback()
+            logging.error(f"Unexpected error creating category: {str(e)}")
+            raise InternalServerError(str(e))
+        
     async def read_category_tree(self, parent_id=None) -> List[CategorySchema]:
         stmt = (
             select(Category)
@@ -76,6 +122,20 @@ class CategoryCRUD:
 
         return [await build_tree(cat) for cat in categories]
 
+    async def read_category_by_name(self, category_name: str) -> CategorySchema:
+        """
+        Get category by name
+        """
+        try:
+            statement = select(Category).filter(Category.name == category_name)
+            result = await self.db_session.execute(statement)           
+            category = result.scalars().first()
+            logging.info(f"Retrieved category {category_name}.")
+            return category
+        except NoResultFound:
+            logging.warning(f"Category with name {category_name} not found.")
+            return None
+
     async def read_category_by_id(self, category_id: int) -> CategorySchema:
         """
         Get category by id
@@ -88,49 +148,31 @@ class CategoryCRUD:
             return category
         except NoResultFound:
             logging.warning(f"Category with id {category_id} not found.")
-            raise ObjectNotFoundError("Category", category_id)
+            raise None
             
-    async def read_products_by_category_id(self, category_id: int) -> ProductSchema:
-        """
-        Get category products by category id
-        """
-        # First check if the category exists
-        category_stmt = select(Category).filter(Category.id == category_id)
-        category_result = await self.db_session.execute(category_stmt)
-        category = category_result.scalar_one_or_none()
-
-        if not category:
-            logging.warning(f"Category with id {category_id} not found.")
-            raise ObjectNotFoundError("Category", category_id)
-        
-        # Category exists, now get products
-        products_stmt = select(Product).filter(Product.category_id == category_id).order_by(Product.id)
-        products_result = await self.db_session.execute(products_stmt)
-        products = products_result.scalars().all()
-        
-        logging.info(f"Retrieved {len(products)} products of category {category_id}.")
-        return products
-            
-    async def update_category(self, category_id, data) -> CategorySchema:
+    async def update_category(self, category_id: UUID, data_category: CategoryUpdateSchema) -> CategorySchema:
         """
         Update Category by id
         """
         statement = select(Category).filter(Category.id == category_id)
 
         result = await self.db_session.execute(statement)
-        category = result.scalars().scalar_one_or_none()
+        db_category = result.scalars().scalar_one_or_none()
 
-        if not category:
+        if not db_category:
             logging.warning(f"Category {category_id} not found.")
-            raise ObjectNotFoundError("Category", category_id)
+            raise NotFoundError("Category", category_id)
         
-        category.name = data["name"]
+        # Update direct fields
+        for field, value in data_category.model_dump(exclude_unset=True).items():
+            if hasattr(db_category, field):
+                setattr(db_category, field, value)
 
         await self.db_session.commit()
-        await self.db_session.refresh(category)
+        await self.db_session.refresh(db_category)
 
         logging.info(f"Successfully updated category {category_id}.")
-        return category
+        return db_category
 
     async def delete_category(self, category_id: UUID) -> bool:
         """delete category by id
@@ -146,6 +188,23 @@ class CategoryCRUD:
 
         logging.info(f"Successfully deleted category {category_id}.")
         return True
+ 
+        # Helper function to create a URL-friendly slug
+    
+    def _slugify(self, s: str) -> str:
+        """
+        Create URL-friendly slug from text.
+        
+        Args:
+            text: Text to slugify
+            
+        Returns:
+            str: URL-friendly slug
+        """
+        s = s.lower().strip()
+        s = re.sub(r'[^\w\s-]', '', s)
+        s = re.sub(r'[\s_]+', '-', s)
+        return s
 
 
        

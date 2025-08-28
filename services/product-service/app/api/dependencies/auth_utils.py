@@ -8,7 +8,7 @@ import logging
 from jose import jwt, JWTError
 
 from .schemas import TokenData
-from .exceptions import AuthenticationError
+from ..exceptions import AuthenticationError
 from ...core.config import settings
 
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
