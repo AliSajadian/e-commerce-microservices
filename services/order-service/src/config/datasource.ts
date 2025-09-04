@@ -8,3 +8,12 @@ config();
 
 // Use the centralized ormConfig for all database settings
 export const AppDataSource = new DataSource(ormConfig);
+
+        // "start": "nest start",
+        // "start:dev": "nest start --watch",
+        // "start:debug": "nest start --debug --watch",
+
+        // "start:dev": "ts-node -r tsconfig-paths/register --project tsconfig.json src/main.ts",
+
+
+

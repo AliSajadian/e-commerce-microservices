@@ -19,7 +19,7 @@ class Tag(Base, Timestamp):
     # Many-to-many relationship with Product
     products: Mapped[List["Product"]] = relationship( # type: ignore
         secondary=product_tag_association,
-        back_populates="product_tags"
+        back_populates="tags"
     )
 
     def __repr__(self):

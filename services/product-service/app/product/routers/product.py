@@ -5,7 +5,7 @@ import uuid
 
 from app.api.dependencies.database import get_product_service
 from app.api.dependencies.auth_utils import has_permission
-from app.product.schemas import ProductCreateSchema, ProductUpdateSchema, ProductSchema, InventorySchema, ProductImageSchema
+from app.product.schemas import ProductCreateSchema, ProductUpdateSchema, ProductSchema, InventorySchema
 from app.product.crud import ProductCRUD
 
 # ============================================================================

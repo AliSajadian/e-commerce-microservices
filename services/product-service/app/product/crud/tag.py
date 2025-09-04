@@ -21,14 +21,17 @@ class TagCRUD:
     def __init__(self, db_session: AsyncSession):
         self.db_session = db_session
         
-    async def create_tag(self, data: TagCreateSchema) -> TagSchema:
+    async def create_tag(self, tag_data: TagCreateSchema) -> TagSchema:
         """
         Create tag object
         """
         try:
-            self.db_session.add(data)
-            tag = await self.db_session.commit()
-            await self.db_session.refresh(data)
+            tag_dict = tag_data.model_dump(exclude_unset=True)
+            tag = Tag(**tag_dict)
+            
+            self.db_session.add(tag)
+            await self.db_session.commit()
+            await self.db_session.refresh(tag)
             
             logging.info(f"Created new tag.")
             return tag
@@ -57,7 +60,7 @@ class TagCRUD:
         """
         statement = select(Tag).order_by(Tag.id)
 
-        result = await self.db_session.execute(statement)
+        result = await self.db_session.execute(statement) # --> crud/tag.py line 60
         tags = result.scalars().all()
         
         logging.info(f"Retrieved {len(tags)} tags.")

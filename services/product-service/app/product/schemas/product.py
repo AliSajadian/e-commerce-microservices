@@ -18,6 +18,12 @@ if TYPE_CHECKING:
 # PRODUCT SCHEMAS
 # ============================================================================
 
+class ProductImageCreateSchema(BaseModel):
+    """Schema for creating a product image."""
+    url: str = Field(..., description="URL of the product image")
+    alt_text: str = Field(..., description="Alternative text for the image")
+    is_main: bool = Field(False, description="Whether this is the main image")
+
 class ProductBaseSchema(BaseModel):
     """Base product schema with shared fields"""
     name: str = Field(..., min_length=1, max_length=255, description="Product name")
@@ -54,9 +60,12 @@ class ProductBaseSchema(BaseModel):
 
 class ProductCreateSchema(ProductBaseSchema):
     """Schema for creating a product"""
-    category_ids: List[uuid.UUID] = Field(default_factory=list, description="Category IDs")
+    category_id: uuid.UUID = Field(default_factory=list, description="Category ID")
     tag_ids: List[uuid.UUID] = Field(default_factory=list, description="Tag IDs")
     initial_quantity: Optional[int] = Field(0, ge=0, description="Initial inventory quantity")
+    reserved_quantity: Optional[int] = Field(0, ge=0, description="Initial inventory quantity")
+    warehouse_location: Optional[str] = Field(..., description="Warehouse location for the product inventory")
+    images: Optional[List[ProductImageCreateSchema]] = Field(default_factory=list, description="Product images")
 
 class ProductUpdateSchema(BaseModel):
     """Schema for updating a product"""

@@ -41,12 +41,17 @@ class ProductCRUD:
                 name=product_in.name,
                 description=product_in.description,
                 price=product_in.price,
+                sku=product_in.sku,
+                is_active=product_in.is_active,
+                category_id=product_in.category_id
             )
 
             # Handle initial inventory
             db_inventory = Inventory(
                 product=db_product, # Link product to inventory
-                quantity=product_in.initial_stock
+                quantity=product_in.initial_quantity,
+                reserved_quantity=product_in.reserved_quantity,
+                warehouse_location=product_in.warehouse_location
             )
             logging.info(f"Created new inventory.")
             self.db_session.add(db_inventory)
@@ -64,13 +69,6 @@ class ProductCRUD:
                 self.db_session.add_all(db_images)
                 logging.info(f"Created {len(db_images)} product images.")
             
-            # Handle categories
-            if product_in.category_ids:
-                categories = await self.db_session.execute(
-                    select(Category).where(Category.id.in_(product_in.category_ids))
-                )
-                db_product.categories.extend(categories.scalars().all())
-
             # Handle tags
             if product_in.tag_ids:
                 tags = await self.db_session.execute(
@@ -80,7 +78,7 @@ class ProductCRUD:
 
             self.db_session.add(db_product)
             await self.db_session.commit()
-            await self.db_session.refresh(db_product, attribute_names=["inventory", "images", "categories", "tags"])
+            await self.db_session.refresh(db_product, attribute_names=["inventory", "images", "category", "tags"])
             
             logging.info(f"Created new product.")
             return db_product
@@ -116,7 +114,7 @@ class ProductCRUD:
             select(Product)
             .options(selectinload(Product.inventory))
             .options(selectinload(Product.images))
-            .options(selectinload(Product.categories))
+            .options(selectinload(Product.category))
             .options(selectinload(Product.tags))
             .offset(skip)
             .limit(limit)
@@ -297,5 +295,27 @@ class ProductCRUD:
         logging.info(f"Successfully deleted product {product_id}.")
         return True
     
-    
+    # @Injectable()
+    # export class SkuService {
+    # generateSku(product: Partial<Product>): string {
+    #     const prefix = product.category?.substring(0, 3).toUpperCase() || 'PROD';
+    #     const baseCode = product.name.substring(0, 3).toUpperCase();
+    #     const variantCode = this.getVariantCode(product);
+    #     const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+        
+    #     return `${prefix}-${baseCode}-${variantCode}-${randomSuffix}`;
+    # }
+
+    # private getVariantCode(product: Partial<Product>): string {
+    #     if (product.color && product.size) {
+    #     return `${product.color.substring(0, 2)}${product.size}`.toUpperCase();
+    #     }
+    #     if (product.color) return product.color.substring(0, 3).toUpperCase();
+    #     if (product.size) return `SZ${product.size.toUpperCase()}`;
+    #     return 'DEF';
+    # }
+    # }
+   
+   
+   
     

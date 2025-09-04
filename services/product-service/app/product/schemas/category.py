@@ -1,7 +1,8 @@
 from __future__ import annotations
+from datetime import datetime
 import uuid
 from typing import TYPE_CHECKING, List, Optional
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 import re
 from .base_schemas import TimestampMixin, UUIDMixin
 
@@ -94,6 +95,32 @@ class CategorySchema(CategoryInDBSchema):
 class CategoryWithProductsSchema(CategorySchema):
     """Category with products (for category detail endpoint)"""
     products: List['ProductSummarySchema'] = Field(default_factory=list)
+
+# 3. This is the primary schema for API responses.
+# It only includes core fields and DB-generated fields.
+# Notice that it does NOT contain parent or children relationships.
+class CategoryResponseSchema(BaseModel):
+    id: uuid.UUID
+    name: str
+    slug: str
+    description: Optional[str] = None
+    parent_id: Optional[uuid.UUID] = None
+    created_at: datetime
+    updated_at: datetime
     
+    model_config = ConfigDict(from_attributes=True)
+
+
+# 4. This is a separate schema for a read/detail endpoint
+# that specifically needs the full hierarchy. It refers to
+# the simple CategoryResponseSchema to avoid recursion.
+class CategoryDetailSchema(CategoryResponseSchema):
+    parent: Optional['CategoryResponseSchema'] = None
+    children: List['CategoryResponseSchema'] = Field(default_factory=list)
+
+# Pydantic 2.0+ uses model_rebuild() for forward references
+CategoryDetailSchema.model_rebuild()    
 # Enable forward references for self-referencing relationship
-CategorySchema.model_rebuild()
+# CategorySchema.model_rebuild()
+
+

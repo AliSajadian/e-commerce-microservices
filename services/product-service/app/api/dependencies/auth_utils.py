@@ -39,7 +39,7 @@ async def get_current_user_id(Authorization: Optional[str] = Header(None)) -> di
         # Decode and verify the token locally
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id: str = payload.get("sub")
-        roles: List[str] = payload.get("rols", [])
+        roles: List[str] = payload.get("roles", [])
         permissions: List[str] = payload.get("permissions", [])
         
         if user_id is None:

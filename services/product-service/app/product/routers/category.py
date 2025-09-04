@@ -1,14 +1,14 @@
 from http import HTTPStatus
 from typing import List
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Depends, Path
 
 from ..crud import CategoryCRUD
-from ..schemas import CategoryCreateSchema, CategorySchema, CategoryUpdateSchema, ProductSchema
-from ...api.dependencies.database import AsyncDbSession, get_category_service
+from ..schemas import CategoryCreateSchema, CategoryDetailSchema, CategoryUpdateSchema, CategoryResponseSchema
+from ...api.dependencies.database import get_category_service
 
 from ...api.dependencies.auth_utils import get_current_user_id
-
+from ...api.dependencies.schemas import TokenData
 # ============================================================================
 # Category router Endpoints
 # ============================================================================
@@ -19,7 +19,7 @@ routers = APIRouter()
 async def create_category(
     category_data: CategoryCreateSchema,
     category_service: CategoryCRUD = Depends(get_category_service)
-) -> CategorySchema:
+) -> CategoryResponseSchema:
     """API endpoint for creating a category resource
 
     Args:
@@ -28,16 +28,16 @@ async def create_category(
     Returns:
         dict: category that has been created
     """
-    return await category_service.create_category(category_data)    
+    return CategoryResponseSchema.model_validate(await category_service.create_category(category_data))   
 
-@routers.get("/tree", response_model=List[CategorySchema])
+@routers.get("/tree", response_model=List[CategoryDetailSchema])
 async def get_category_tree(    
     category_service: CategoryCRUD = Depends(get_category_service)
-) -> List[CategorySchema]:
+) -> List[CategoryDetailSchema]:
     """API endpoint for listing all category hierarchy
     """
     categories = await category_service.read_category_tree()
-    return [CategorySchema.model_validate(cat) for cat in categories]
+    return [CategoryDetailSchema.model_validate(cat) for cat in categories]
 
 @routers.get("/{category_id}")
 async def get_category(    
@@ -46,8 +46,8 @@ async def get_category(
     # query_param: str = Query(None, max_length=5)
     # This dependency will run first, and if it succeeds, it will
     # pass the user_id to the handler.
-    user_id: str = Depends(get_current_user_id) 
-) -> CategorySchema:
+    token: TokenData = Depends(get_current_user_id) # --> access level permission 
+) -> CategoryDetailSchema:
     """API endpoint for retrieving a category by its ID
 
     Args:
@@ -57,14 +57,14 @@ async def get_category(
         dict: The retrieved category
     """
     category = await category_service.read_category_by_id(category_id)
-    return CategorySchema.model_validate(category)
+    return CategoryDetailSchema.model_validate(category)
 
 @routers.patch("/{category_id}")
 async def update_category(    
     data_category: CategoryUpdateSchema, 
     category_service: CategoryCRUD = Depends(get_category_service),
     category_id: uuid.UUID = Path(..., description="The category id, you want to update: ")
-) -> CategorySchema:
+) -> CategoryResponseSchema:
     """Update by ID
 
     Args:
@@ -78,7 +78,7 @@ async def update_category(
         category_id, 
         data_category=data_category.model_dump(exclude_unset=True)
     )
-    return CategorySchema.model_validate(category)
+    return CategoryResponseSchema.model_validate(category)
 
 @routers.delete("/{category_id}", status_code=HTTPStatus.OK)
 async def delete_category(    

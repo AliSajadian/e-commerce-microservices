@@ -8,7 +8,7 @@ export class AddressDto {
   @IsString()
   street: string;
 
-  @ApiProperty({ example: 'Anytown' })
+  @ApiProperty({ example: 'NewYork' })
   @IsNotEmpty()
   @IsString()
   city: string;
@@ -17,4 +17,14 @@ export class AddressDto {
   @IsNotEmpty()
   @IsString()
   state: string;
+
+  @ApiProperty({ example: 'NY main 123' })
+  @IsNotEmpty()
+  @IsString()
+  zipCode: string;
+
+  @ApiProperty({ example: 'USA' })
+  @IsNotEmpty()
+  @IsString()
+  country: string;
 }

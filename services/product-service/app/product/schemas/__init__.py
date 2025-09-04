@@ -27,7 +27,8 @@ __all__ = [
     # Tag exports
     "Tag", "TagCreate", "TagUpdate", "TagInDB",
     # Category exports  
-    "Category", "CategoryCreate", "CategoryUpdate", "CategoryInDB", "CategoryWithProducts",
+    "Category", "CategoryCreate", "CategoryUpdate", "CategoryInDB", 
+    "CategoryWithProducts", "CategoryResponseSchema", "CategoryDetailSchema",
     # ProductImage exports
     "ProductImage", "ProductImageCreate", "ProductImageUpdate", "ProductImageInDB",
     # Inventory exports

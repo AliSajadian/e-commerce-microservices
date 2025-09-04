@@ -34,19 +34,21 @@ def get_tag_service(
     """Dependency for TagCRUD."""
     return TagCRUD(db_session)
 
-def get_product_service(
-    db_session: AsyncSession = Depends(async_get_db),
-    category_service: CategoryCRUD = Depends(get_category_service)
-) -> ProductCRUD:
-    """Dependency for ProductCRUD."""
-    return ProductCRUD(db_session, category_service)
-
 def get_inventory_service(
     db_session: AsyncSession = Depends(async_get_db)
     # product_service: ProductCRUD = Depends(get_product_service)
 ) -> InventoryCRUD:
     """Dependency for InventoryCRUD with ProductCRUD injection."""
     return InventoryCRUD(db_session) #), product_service)
+
+def get_product_service(
+    db_session: AsyncSession = Depends(async_get_db),
+    category_service: CategoryCRUD = Depends(get_category_service),
+    inventory_service: InventoryCRUD = Depends(get_inventory_service),
+    tag_service: TagCRUD = Depends(get_tag_service)
+) -> ProductCRUD:
+    """Dependency for ProductCRUD."""
+    return ProductCRUD(db_session, category_service, inventory_service, tag_service)
 
 def get_product_image_service(
     db_session: AsyncSession = Depends(async_get_db),

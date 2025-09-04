@@ -1,6 +1,6 @@
 from fastapi import Depends, FastAPI
 from ...product.routers import category_routers, inventory_routers, tag_routers, product_routers, product_image_routers
-# from ..dependencies.auth_utils import verify_token , dependencies=[Depends(verify_token)])
+# from ..dependencies.auth_utils import verify_token , dependencies=[Depends(verify_token)]
 
 
 def register_routes(app: FastAPI):

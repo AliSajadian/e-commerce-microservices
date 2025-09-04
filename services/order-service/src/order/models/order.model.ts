@@ -14,22 +14,22 @@ export enum OrderStatus {
 }
 
 // Embedded object for address (or a separate entity if addresses are reusable/complex)
-export class Address {
-  @Column()
-  street: string;
+// export class Address {
+//   @Column({ nullable: true })
+//   street: string;
 
-  @Column()
-  city: string;
+//   @Column({ nullable: true })
+//   city: string;
 
-  @Column()
-  state: string;
+//   @Column({ nullable: true })
+//   state: string;
 
-  @Column()
-  zipCode: string;
+//   @Column({ nullable: true })
+//   zipCode: string;
 
-  @Column()
-  country: string;
-}
+//   @Column({ nullable: true })
+//   country: string;
+// }
 
 @Entity('orders')
 export class Order {
@@ -48,8 +48,23 @@ export class Order {
   @Column({ type: 'uuid', nullable: true })
   paymentId: string; // Link to the payment service
 
-  @Column(() => Address) // Embed the Address object
-  shippingAddress: Address;
+  // @Column(() => Address) // Embed the Address object
+  // shippingAddress: Address;
+
+  @Column({ nullable: true })
+  shippingAddressStreet: string;
+
+  @Column({ nullable: true })
+  shippingAddressCity: string;
+
+  @Column({ nullable: true })
+  shippingAddressState: string;
+
+  @Column({ nullable: true })
+  shippingAddressZipcode: string;
+
+  @Column({ nullable: true })
+  shippingAddressCountry: string;
 
   @Column({
     type: 'enum',

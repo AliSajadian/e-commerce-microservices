@@ -15,8 +15,8 @@ import { IOrder } from './interfaces/order.interface';
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
-  @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @Permissions('order:create')
+  // @UseGuards(JwtAuthGuard, PermissionsGuard)
+  // @Permissions('order:create')
   @Post()
   @ApiBody({
     type: CreateOrderDto,
