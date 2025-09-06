@@ -22,8 +22,14 @@ export const ormConfig: DataSourceOptions = {
   // migrations: [path.join(__dirname, 'migrations', '**', '*.ts')],
 
   // Use a dynamic path that correctly points to .ts or .js files
-  entities: [path.join(__dirname, '..', '**', `*.model.${fileExtension}`)],
-  migrations: [path.join(__dirname, 'migrations', '**', `*.${fileExtension}`)],
+  // entities: [path.join(__dirname, '..', '**', `*.model.${fileExtension}`)],
+  // migrations: [path.join(__dirname, 'migrations', '**', `*.${fileExtension}`)],
+  entities: [
+    path.join(__dirname, '..', '..', 'src', 'payment', 'entities', '**', '*.ts'),
+  ],
+  migrations: [
+    path.join(__dirname, '..', '..', 'src', 'migrations', '**', '*.ts'),
+  ],
 };
 
 // This is the separate CLI configuration object.

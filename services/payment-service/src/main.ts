@@ -1,6 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -10,11 +13,25 @@ async function bootstrap() {
     exclude: ['health', 'ready'],
   });
 
-    // Enable CORS for all origins  
+  // Add the global exception filter & logging interceptor
+  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalFilters(new GlobalExceptionFilter());
+
+  // Global validation pipe
+  // app.useGlobalPipes(new ValidationPipe({
+  //   transform: true,
+  //   whitelist: true,
+  //   forbidNonWhitelisted: true,
+  //   disableErrorMessages: false
+  // }));
+
+  // Enable CORS for all origins  
   app.enableCors({
-      origin: '*', // Adjust this in production to restrict origins
-      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-      allowedHeaders: 'Content-Type, Accept',
+    origin: ['http://localhost:3000', 'http://localhost:3001'], // Add your frontend URLs
+    credentials: true,
+    // origin: '*', // Adjust this in production to restrict origins
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Accept',
   });
 
   // // Enable Helmet for security headers
@@ -36,17 +53,22 @@ async function bootstrap() {
   const morgan = require('morgan');
   app.use(morgan('combined')); // Use 'combined' format for detailed logging
 
-
   // Set up Swagger API Documentation
   const config = new DocumentBuilder()
     .setTitle('Payment Service API')
-    .setDescription('The API documentation for the Payment microservice')
+    .setDescription('Payment service with Stripe integration')
     .setVersion('1.0')
     .addTag('payments')
+    .addTag('webhooks')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(3001);
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
+  
+  console.log(`🚀 Payment Service is running on: http://localhost:${port}`);
+  console.log(`📚 API Documentation: http://localhost:${port}/api`);
+  console.log(`🔗 Webhook endpoint: http://localhost:${port}/webhooks/stripe`);
 }
 bootstrap();
