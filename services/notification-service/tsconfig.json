@@ -16,7 +16,11 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    // "paths": {
+    //   // This path is important. It creates an alias for your src folder
+    //   "@src/*": ["src/*"]
+    // }
   },
   "exclude": [
     "node_modules",

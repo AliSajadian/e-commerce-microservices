@@ -1,18 +1,19 @@
 {
     "scripts": {
-        "typeorm": "typeorm-ts-node-commonjs",
+        "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
         "build": "nest build",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-        "start": "nest start",
-        "start:dev": "nest start --watch",
-        "start:debug": "nest start --debug --watch",
+        "start": "node dist/main.js",
+        "start:dev": "node --require ts-node/register --require tsconfig-paths/register src/main.ts",
+        "start:debug": "node --inspect-brk -r ts-node/register src/main.ts",
+        "prebuild": "npm run clean",
+        "clean": "node -e \"require('fs').rmSync('dist', {recursive: true, force: true})\"",
         "start:prod": "node dist/main",
         "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-        "premigrate:generate": "npm run build",
-        "migrate:generate": "npm run typeorm -- migration:generate src/migrations/OrderMigration --dataSource src/datasource.ts",
-        "migrate:run": "npm run typeorm -- migration:run --dataSource src/datasource.ts",
-        "migrate:revert": "npm run typeorm -- migration:revert --dataSource src/datasource.ts",
-        "migrate:show": "npm run typeorm -- migration:show --dataSource src/datasource.ts"
+        "migrate:generate": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate src/migrations/PaymenyMigration --dataSource src/config/datasource.ts",
+        "migrate:run": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run --dataSource src/config/datasource.ts",
+        "migrate:revert": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert --dataSource src/config/datasource.ts",
+        "migrate:show": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:show --dataSource src/config/datasource.ts"
     },
     "dependencies": {
         "@grpc/grpc-js": "^1.13.4",
@@ -23,12 +24,14 @@
         "@nestjs/microservices": "^11.1.5",
         "@nestjs/passport": "^11.0.5",
         "@nestjs/platform-express": "^11.1.5",
-        "@nestjs/platform-socket.io": "^11.1.5",
         "@nestjs/swagger": "^11.2.0",
         "@nestjs/typeorm": "^11.0.0",
+        "@types/morgan": "^1.9.10",
         "class-transformer": "^0.5.1",
         "class-validator": "^0.14.2",
         "dotenv": "^17.2.1",
+        "morgan": "^1.10.1",
+        "nodemailer": "^7.0.6",
         "passport-jwt": "^4.0.1",
         "pg": "^8.16.3",
         "rxjs": "^7.8.2",
@@ -37,8 +40,11 @@
     },
     "devDependencies": {
         "@types/express": "^5.0.3",
-        "@types/node": "^24.2.0",
+        "@types/node": "^24.1.0",
+        "@types/nodemailer": "^7.0.1",
         "@types/passport-jwt": "^4.0.1",
+        "ts-node": "^10.9.2",
+        "tsconfig-paths": "^4.2.0",
         "typeorm-cli": "^1.0.7",
         "typescript": "^5.9.2"
     }

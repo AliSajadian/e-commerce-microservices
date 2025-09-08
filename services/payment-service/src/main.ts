@@ -18,12 +18,12 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   // Global validation pipe
-  // app.useGlobalPipes(new ValidationPipe({
-  //   transform: true,
-  //   whitelist: true,
-  //   forbidNonWhitelisted: true,
-  //   disableErrorMessages: false
-  // }));
+  app.useGlobalPipes(new ValidationPipe({
+    transform: true,
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    disableErrorMessages: false
+  }));
 
   // Enable CORS for all origins  
   app.enableCors({
