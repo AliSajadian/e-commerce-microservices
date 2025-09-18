@@ -1,4 +1,3 @@
-import * as path from 'path';
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { join } from 'path';
@@ -8,40 +7,34 @@ import { ConfigModule, ConfigService } from '@nestjs/config'; // Import ConfigMo
 import { Algorithm } from 'jsonwebtoken'; // Import the Algorithm type
 import { PassportModule } from '@nestjs/passport';
 
-import { notificationModule } from './notification/notification.module';
+import { NotificationModule } from './notification/notification.module';
+import { KafkaModule } from './kafka/kafka.module';
+import { ProductModule } from './product/product.module'; // Import the new module
+import { ProvidersModule } from './providers/providers.module';
+
 import { JwtStrategy } from './auth/jwt.strategy';
 import { AppController } from './app.controller';
+import { HealthController } from './controllers/health.controller';
 import { AppService } from './app.service';
-import { ProductModule } from './product/product.module'; // Import the new module
 import { ormConfig } from './config/ormconfig';
+import { EventsModule } from './events/event.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env',
     }),
+    
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      inject: [ConfigService],
       useFactory: async () => {
         // Use the centralized ormConfig for the TypeOrmModule
         return ormConfig;
       },
+      inject: [ConfigService],
     }),
-    ClientsModule.register([
-      {
-        name: 'PRODUCT_PACKAGE', // This is the name we'll inject later
-        transport: Transport.GRPC,
-        options: {
-          url: 'localhost:50051', // The address of the product-service gRPC server
-          package: 'product',
-          protoPath: join(__dirname, 'proto/product.proto'),
-        },
-      },
-    ]),    
-    notificationModule,
-    PassportModule,
-    ProductModule,
+
     JwtModule.registerAsync({
       imports: [ConfigModule], // Import the ConfigModule
       useFactory: async (configService: ConfigService) => ({
@@ -54,9 +47,38 @@ import { ormConfig } from './config/ormconfig';
         },
       }),
       inject: [ConfigService], // Inject ConfigService into the factory
+      global: true
     }),
+
+    ClientsModule.register([
+      {
+        name: 'PRODUCT_PACKAGE', // This is the name we'll inject later
+        transport: Transport.GRPC,
+        options: {
+          url: 'localhost:50051', // The address of the product-service gRPC server
+          package: 'product',
+          protoPath: join(__dirname, 'proto/product.proto'),
+        },
+      },
+    ]),    
+
+    KafkaModule,
+    EventsModule,
+    NotificationModule,
+    PassportModule,
+    ProductModule,
+    ProvidersModule,
   ],
-  controllers: [AppController],
-  providers: [JwtStrategy, AppService], // Make sure to add JwtStrategy to the providers list
+
+  controllers: [
+    AppController, 
+    HealthController],
+
+  providers: [
+    JwtStrategy, 
+    AppService
+  ], // Make sure to add JwtStrategy to the providers list
 })
 export class AppModule {}
+
+

@@ -14,8 +14,11 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     sub: str  # username or user ID
+    email: str
     role: Optional[str] = None
     permissions: Optional[List[str]] = None
+    iat: str
+    exp: str
     
     def get_uuid(self) -> uuid.UUID | None:
         if self.user_id:
@@ -25,13 +28,15 @@ class TokenData(BaseModel):
 class LoginResponse(BaseModel):
     user_id: uuid.UUID
     full_name: str
+    email: str
     access_token: str
     # refresh_token: str
-    permissions: Optional[List[str]] = None  # Flattened list
+    # permissions: Optional[List[str]] = None  # Flattened list
     
 class RegisterUserRequest(BaseModel):
     username: str
     first_name: str
     last_name: str
     password: str
+    email: str
 

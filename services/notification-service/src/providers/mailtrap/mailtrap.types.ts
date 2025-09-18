@@ -1,3 +1,42 @@
+export interface MailtrapConfig {
+  token: string;
+  accountId: string;
+  inboxId: string;
+  testInboxId?: string;
+  sandboxMode: boolean;
+}
+
+export interface MailtrapEmailOptions {
+  to: string | string[];
+  cc?: string | string[];
+  bcc?: string | string[];
+  from?: {
+    email: string;
+    name?: string;
+  };
+  subject: string;
+  html?: string;
+  text?: string;
+  templateId?: string;
+  templateVariables?: Record<string, any>;
+  attachments?: Array<{
+    content: string;
+    filename: string;
+    type?: string;
+    disposition?: 'attachment' | 'inline';
+    contentId?: string;
+  }>;
+  headers?: Record<string, string>;
+  customArgs?: Record<string, string>;
+}
+
+export interface MailtrapEmailResponse {
+  messageId: string;
+  status: string;
+}
+
+
+//================================================================
 // src/types/email.types.ts
 export interface EmailOptions {
   to: string | string[];
@@ -46,3 +85,4 @@ export interface EmailJob {
   createdAt: Date;
   updatedAt: Date;
 }
+

@@ -13,6 +13,11 @@ class UserBase(BaseModel):
     username: str
     first_name: str
     last_name: str
+    email: str
+    avatar: Optional[str] = None
+    is_active: Optional[bool] = None
+    preferred_language: Optional[str] = None
+    timezone: Optional[str] = None
 
 PasswordStr = Annotated[str, StringConstraints(min_length=8)]
 class UserCreateModel(UserBase):

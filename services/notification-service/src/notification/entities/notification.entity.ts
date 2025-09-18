@@ -69,6 +69,18 @@ export class Notification {
   @Column({ type: 'boolean', default: false })
   isEmailSent: boolean;
 
+  @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
+  providerMessageId?: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deliveredAt?: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  failedAt?: Date;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  failureReason?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -10,7 +10,8 @@ from ..auth.exceptions import RefreshTokenExpireError, \
 def create_token(data: dict, expires_delta: timedelta, token_type: str) -> str:
     encode = data.copy()
     encode.update({
-        'exp': datetime.now(timezone.utc) + expires_delta,
+        "exp": datetime.now(timezone.utc) + expires_delta,
+        "iat": datetime.now(timezone.utc),
         "type": token_type
     })
     token = jwt.encode(encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)

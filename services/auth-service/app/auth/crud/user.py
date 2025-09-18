@@ -54,7 +54,14 @@ class UserCRUDs:
             if existing_user:
                 raise ObjectAlreadyRegistered("Username")
             
-            # 2. Find the roles
+            # 2. Check if email already exists
+            existing_email_user = await self.db.execute(
+                select(User).where(User.email == user_data.email)
+            )
+            if existing_email_user.scalars().first():
+                raise ValueError(f"User with email {user_data.email} already exists.")
+        
+            # 3. Find the roles
             roles = []
             if user_data.role_ids:
                 roles_result = await self.db.execute(
@@ -68,23 +75,27 @@ class UserCRUDs:
                     # You might want to raise an exception here instead of continuing
                     # raise ObjectVerificationError(f"One or more role IDs not found: {list(missing_role_ids)}")
 
-            # 3. Create the new user object
+            # 4. Create the new user object
             user = User(
                 username=user_data.username, 
                 first_name=user_data.first_name, 
                 last_name=user_data.last_name, 
+                email=user_data.email,
+                avatar=user_data.avatar,
+                preferred_language=user_data.preferred_language,
+                timezone=user_data.timezone,
                 password_hash=get_password_hash(user_data.password),
                 roles=roles  # Assign roles directly on creation
             )
             
-            # 4. Add to session and commit
+            # 5. Add to session and commit
             self.db.add(user)
             await self.db.commit()
             
-            # 5. Refresh to get the final state from the database
+            # 6. Refresh to get the final state from the database
             await self.db.refresh(user)
             
-            # 6. Eagerly load roles for the final return model
+            # 7. Eagerly load roles for the final return model
             user_with_roles = await self.db.execute(
                 select(User)
                 .options(selectinload(User.roles))
@@ -106,7 +117,7 @@ class UserCRUDs:
             #     )
             # --- END RabbitMQ ---
             
-            # 7. Convert to Pydantic model for response
+            # 8. Convert to Pydantic model for response
             return UserModel.from_orm(final_user)
             
         except ObjectAlreadyRegistered as e:

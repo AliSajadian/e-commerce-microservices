@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { HttpModule } from '@nestjs/axios';
 
 import { ProductModule } from '../product/product.module'; // Import ProductModule
 import { 
+  Notification,
   NotificationDevice, 
   NotificationPreference, 
   NotificationServiceUser, 
@@ -15,7 +17,8 @@ import {
   NotificationPreferenceService, 
   NotificationService, 
   NotificationTemplateService, 
-  UserSyncService 
+  UserSyncService, 
+  AuthClientService
 } from './services';
 import { 
   NotificationController, 
@@ -23,6 +26,7 @@ import {
   NotificationPreferenceController, 
   NotificationDeviceController 
 } from './controllers';
+import { NotificationRepository } from './repositories/notification.repository';
 
 @Module({
   imports: [
@@ -35,22 +39,30 @@ import {
       NotificationServiceUser, 
       NotificationPreference,
       NotificationDevice
-  ]),
-    ProductModule
+    ]),
+
+    ProductModule,
+    HttpModule
   ],
   controllers: [
     NotificationController, 
     NotificationTemplateController, 
     NotificationPreferenceController, 
-    NotificationDeviceController
+    NotificationDeviceController,
   ],
   providers: [
     UserSyncService, 
     NotificationService, 
     NotificationTemplateService, 
     NotificationPreferenceService, 
-    NotificationService, 
-    NotificationDeliveryService
+    NotificationDeliveryService,
+    NotificationRepository, 
+    AuthClientService,
   ],
+  exports: [
+    AuthClientService,
+    NotificationService,
+  ]
 })
-export class notificationModule {}
+export class NotificationModule {}
+

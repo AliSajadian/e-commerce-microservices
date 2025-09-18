@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -7,9 +7,12 @@ import { Notification, User, NotificationServiceUser } from '../entities';
 import { NotificationType, NotificationStatus } from '../enums';
 import { NotificationRepository } from '../repositories/notification.repository';
 import { NotificationStats, NotificationAnalytics } from '../interfaces';
+import { AuthClientService } from './auth-client.service';
 
 @Injectable()
 export class NotificationService {
+  readonly logger = new Logger(NotificationService.name);
+
   constructor(
     private readonly notificationRepository: NotificationRepository,
     // @InjectRepository(Notification)
@@ -18,30 +21,47 @@ export class NotificationService {
     private userRepository: Repository<User>,
     @InjectRepository(NotificationServiceUser)
     private notificationServiceUserRepository: Repository<NotificationServiceUser>,
+     private readonly authClientService: AuthClientService,
   ) {}
 
   // Core notification operations
   async createNotification(data: CreateNotificationDto): Promise<Notification> {
-    // Check if user exists and is active
-    const user = await this.userRepository.findOne({
+    // First, try to find user locally (fast)
+    let user = await this.userRepository.findOne({
       where: { id: data.userId, isActive: true }
-    }) as any;
-    
-    if (!user) {
-      throw new NotFoundException('User not found or inactive');
-    }
-
-    // Check notification limits
-    const serviceUser = await this.notificationServiceUserRepository.findOne({
-      where: { userId: data.userId }
     });
 
-    if (serviceUser && !this.canSendNotification(serviceUser)) {
-      throw new Error('Daily notification limit reached');
+    // If not found locally, try to sync from auth-service
+    if (!user) {
+      try {
+        // Call auth-service to get user and sync locally
+        const authUser = await this.authClientService.getUser(data.userId);
+        
+        // Cache user locally for future use
+        user = await this.userRepository.save({
+          id: authUser.id,
+          email: authUser.email,
+          firstName: authUser.first_name,
+          lastName: authUser.last_name,
+          avatar: authUser.avatar,
+          isActive: authUser.is_active,
+          lastSyncedAt: new Date()
+        });
+        
+        this.logger.log(`User ${data.userId} synced on-demand`);
+        
+      } catch (error) {
+        if (error.status === 404) {
+          throw new NotFoundException('User not found or inactive');
+        }
+        throw new BadRequestException('Failed to validate user');
+      }
     }
 
+    // Create notification with validated user
     const notification = this.notificationRepository.create({
       ...data,
+      user, // Include complete user data
       type: data.type || NotificationType.INFO,
     });
 

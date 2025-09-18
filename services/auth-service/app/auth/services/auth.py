@@ -33,7 +33,8 @@ class AuthServices:
                 username=register_user_request.username,
                 first_name=register_user_request.first_name,
                 last_name=register_user_request.last_name,
-                password_hash=get_password_hash(register_user_request.password)
+                password_hash=get_password_hash(register_user_request.password),
+                email=register_user_request.email,
             )    
             
             db.add(create_user_model)
@@ -90,27 +91,29 @@ class AuthServices:
         if not user:
             raise AuthenticationError()
         
-        print("=================start create access_token ...")
+        print("================= start create access_token ...")
         access_token = create_access_token({
             "sub": str(user.id),
+            "email": str(user.email),
             "roles": [role.name for role in user.roles],
             "permissions": [perm.name for role in user.roles for perm in role.permissions]
         })
-        print("=================end create access_token")
-        print("=================start create refresh_token ...")
+        print("================= end create access_token")
+        print("================= start create refresh_token ...")
         refresh_jti = str(uuid.uuid4())
         refresh_token = create_refresh_token({
             "sub": str(user.id),
             "jti": refresh_jti
         })
-        print("=================end create refresh_token ")
+        print("================= end create refresh_token ")
         
         await redis_store_refresh_token(jti=refresh_jti ,user_id=str(user.id))
-        print("s=================aved created refresh_token")
+        print("s================ store created refresh_token in redis")
         
         login_response = LoginResponse(
             user_id=user.id,
             full_name=self.__get_full_name(user),
+            email=user.email,
             access_token=access_token,
         )
         
@@ -190,14 +193,17 @@ class AuthServices:
             payload = decode_jwt(token)
             if payload.get("type") != "refresh":
                 raise RefreshTokenTypeInvalidError()
+            
             jti = payload.get("jti")
             user_id = payload.get("sub")
+            
             if not jti or not user_id:
                 raise RefreshTokenInvalidError()
+            
             redis_value = await redis_client.get(f"refresh_token:{jti}")
             redis_user_id = await redis_client.get(f"refresh_token:{jti}")
-            print("==========user_id: ", user_id)
-            print("==========redis_user_id: ", redis_value)
+            print("================ user_id: ", user_id)
+            print("================ redis_user_id: ", redis_value)
             if redis_value is None:
                 raise RefreshTokenExpireError() # Token expired or revoked
             
@@ -217,6 +223,7 @@ class AuthServices:
         # Create new access token
         new_access_token = create_access_token({
             "sub": str(user_id),
+            "email": str(user.email),
             "roles": [role.name for role in user.roles],
             "permissions": [perm.name for role in user.roles for perm in role.permissions]
         })
