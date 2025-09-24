@@ -7,7 +7,8 @@
         "start": "node dist/main.js",
         "start:dev": "node --require ts-node/register --require tsconfig-paths/register src/main.ts",
         "start:debug": "node --inspect-brk -r ts-node/register src/main.ts",
-        "prebuild": "rimraf dist",
+        "prebuild": "npm run clean",
+        "clean": "node -e \"require('fs').rmSync('dist', {recursive: true, force: true})\"",
 
         "start:prod": "node dist/main",
         "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",

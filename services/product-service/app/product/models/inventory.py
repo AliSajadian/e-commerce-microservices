@@ -25,3 +25,6 @@ class Inventory(Base, Timestamp):
     
     def __repr__(self):
         return f"<Inventory(id={self.id}, product_id={self.product_id}, quantity={self.quantity})>"
+    
+    
+    

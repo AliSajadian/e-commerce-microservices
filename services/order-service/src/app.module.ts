@@ -9,7 +9,6 @@ import { Algorithm } from 'jsonwebtoken'; // Import the Algorithm type
 import { PassportModule } from '@nestjs/passport';
 
 import { OrderModule } from './order/order.module';
-import { Order } from './order/models/order.model'; // Import your Order entity
 import { JwtStrategy } from './auth/jwt.strategy';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -30,17 +29,6 @@ import { ormConfig } from './config/ormconfig';
         return ormConfig;
       },
     }),
-    ClientsModule.register([
-      {
-        name: 'PRODUCT_PACKAGE', // This is the name we'll inject later
-        transport: Transport.GRPC,
-        options: {
-          url: 'localhost:50051', // The address of the product-service gRPC server
-          package: 'product',
-          protoPath: join(__dirname, 'proto/product.proto'),
-        },
-      },
-    ]),    
     OrderModule,
     PassportModule,
     ProductModule,

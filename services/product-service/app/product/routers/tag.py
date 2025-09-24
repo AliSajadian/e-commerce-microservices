@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path
 from ..crud import TagCRUD
 from ..schemas.tag import TagCreateSchema, TagUpdateSchema, TagSchema
 from ...api.dependencies.database import get_tag_service
+from app.utils.validation import safe_validate
 
 # ============================================================================
 # Tag router endpoints
@@ -34,7 +35,8 @@ async def get_all_tags(
 ) -> List[TagSchema]:
     """API endpoint for listing all tag resources
     """
-    return [TagSchema.model_validate(t) for t in await tag_service.read_all_tags()]
+    tags = await tag_service.read_all_tags()
+    return [t for tag in tags if (t := safe_validate(TagSchema, tag))]
 
 @routers.get("/{tag_id}")
 async def get_tag_by_id(

@@ -1,10 +1,10 @@
 import logging
 import uuid
 from typing import List, Optional
-from sqlalchemy import select, delete
+from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound, IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload # For eagerly loading relationships
+from sqlalchemy.orm import selectinload, joinedload # For eagerly loading relationships
 
 from . import CategoryCRUD, InventoryCRUD, TagCRUD
 from app.product.models import Product, Category, Tag, Inventory, ProductImage
@@ -48,7 +48,7 @@ class ProductCRUD:
 
             # Handle initial inventory
             db_inventory = Inventory(
-                product=db_product, # Link product to inventory
+                product_id=db_product.id, # Link product to inventory
                 quantity=product_in.initial_quantity,
                 reserved_quantity=product_in.reserved_quantity,
                 warehouse_location=product_in.warehouse_location
@@ -60,7 +60,7 @@ class ProductCRUD:
             if product_in.images:
                 db_images = [
                     ProductImage(
-                        product=db_product,
+                        product_id=db_product.id,
                         url=img.url,
                         alt_text=img.alt_text,
                         is_main=img.is_main
@@ -114,12 +114,12 @@ class ProductCRUD:
             select(Product)
             .options(selectinload(Product.inventory))
             .options(selectinload(Product.images))
-            .options(selectinload(Product.category))
+            .options(joinedload(Product.category))
             .options(selectinload(Product.tags))
             .offset(skip)
             .limit(limit)
         )
-        return result.scalars().all()
+        return result.unique().scalars().all()
     
     async def read_product_by_id(self, product_id: uuid.UUID) -> Optional[ProductSchema]:
         """
@@ -130,7 +130,7 @@ class ProductCRUD:
                 select(Product)
                 .options(selectinload(Product.inventory))
                 .options(selectinload(Product.images))
-                .options(selectinload(Product.categories))
+                .options(joinedload(Product.category))
                 .options(selectinload(Product.tags))
                 .where(Product.id == product_id)
             )
@@ -285,7 +285,7 @@ class ProductCRUD:
         the associated inventory record will also be deleted.
         """
         # check product exists
-        db_product = self.read_product_by_id(product_id)
+        db_product = await self.read_product_by_id(product_id)
         if not db_product:
             return False
 

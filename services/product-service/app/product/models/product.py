@@ -22,31 +22,16 @@ class Product(Base, Timestamp):
     category_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("product_categories.id"), nullable=False, index=True)
 
     # One-to-one relationship with Inventory
-    inventory = relationship("Inventory", back_populates="product")
-    # inventory: Mapped[Optional["Inventory"]] = relationship(
-    #     back_populates="product",
-    #     cascade="all, delete-orphan", # Deletes inventory when product is deleted
-    # )
+    inventory = relationship("Inventory", back_populates="product", uselist=False)
         
     # One-to-Many with ProductImage
     images = relationship("ProductImage", back_populates="product")
-    # images: Mapped[List["ProductImage"]] = relationship(
-    #     back_populates="product",
-    #     cascade="all, delete-orphan"
-    # )    
         
     # Many-to-many relationship with Category
     category = relationship("Category", back_populates="products")
-    # categories: Mapped[List["Category"]] = relationship(
-    #     back_populates="products"
-    # )
 
     # Many-to-many relationship with Tag
     tags = relationship("Tag", secondary=product_tag_association, lazy="selectin", back_populates="products")
-    # tags: Mapped[List["Tag"]] = relationship(
-    #     secondary=product_tag_association,
-    #     back_populates="products"
-    # )
 
     def __repr__(self):
         return f"<Product(id={self.id}, name='{self.name}', price={self.price})>"

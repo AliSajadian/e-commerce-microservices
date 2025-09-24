@@ -202,8 +202,7 @@ class CategoryCRUD:
     async def delete_category(self, category_id: UUID) -> bool:
         """delete category by id
         """
-        stmt = select(Category).where(Category.id == category_id)
-        category = (await self.db_session.execute(stmt)).scalar_one_or_none()
+        category = await self.read_category_by_id(category_id)
         
         if not category:
             return False

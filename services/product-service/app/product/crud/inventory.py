@@ -154,8 +154,7 @@ class InventoryCRUD:
     async def delete_inventory(self, inventory_id: UUID) -> bool:
         """delete inventory by id
         """
-        stmt = select(Inventory).where(Inventory.id == inventory_id)
-        inventory = (await self.db_session.execute(stmt)).scalar_one_or_none()
+        inventory = await self.read_inventory_by_id(inventory_id)
         
         if not inventory:
             return False

@@ -5,6 +5,8 @@ import { OrderService } from './order.service';
 import { Order } from './models/order.model';
 import { OrderItem } from './models/order.item.model';
 import { ProductModule } from '../product/product.module'; // Import ProductModule
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { join } from 'path';
 
 @Module({
   imports: [

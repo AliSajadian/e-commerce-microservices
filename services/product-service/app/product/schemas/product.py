@@ -2,14 +2,14 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING, List, Optional
 from decimal import Decimal
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 import re
 from .base_schemas import TimestampMixin, UUIDMixin
-from . import CategorySchema, InventorySchema, ProductImageSchema, TagSchema
+from . import CategoryInDBSchema, InventorySchema, ProductImageSchema, TagSchema
 
 # Only import for type checking, not runtime
 if TYPE_CHECKING:
-    from .category import CategorySchema
+    from .category import CategoryInDBSchema
     from .tag import TagSchema
     from .inventory import InventorySchema
     from .product_image import ProductImageSchema
@@ -51,12 +51,12 @@ class ProductBaseSchema(BaseModel):
             raise ValueError('SKU must contain only letters, numbers, hyphens, and underscores')
         return v
     
-    @field_validator('price')
-    @classmethod
-    def validate_price(cls, v):
-        if v <= 0:
-            raise ValueError('Price must be greater than 0')
-        return v
+    # @field_validator('price')
+    # @classmethod
+    # def validate_price(cls, v):
+    #     if v <= 0:
+    #         raise ValueError('Price must be greater than 0')
+    #     return v
 
 class ProductCreateSchema(ProductBaseSchema):
     """Schema for creating a product"""
@@ -74,7 +74,7 @@ class ProductUpdateSchema(BaseModel):
     price: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
     sku: Optional[str] = Field(None, min_length=1)
     is_active: Optional[bool] = None
-    category_ids: Optional[List[uuid.UUID]] = None
+    category_id: Optional[uuid.UUID] = None
     tag_ids: Optional[List[uuid.UUID]] = None
     
     @field_validator('name')
@@ -107,20 +107,19 @@ class ProductUpdateSchema(BaseModel):
 class ProductInDBSchema(UUIDMixin, ProductBaseSchema, TimestampMixin):
     """Complete product schema with database fields"""
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ProductSchema(ProductInDBSchema):
     """Public product schema with all relationships"""
     images: List['ProductImageSchema'] = Field(default_factory=list)
     inventory: Optional['InventorySchema'] = None
-    categories: List['CategorySchema'] = Field(default_factory=list)
+    category: Optional['CategoryInDBSchema'] = None
     tags: List['TagSchema'] = Field(default_factory=list)
 
 class ProductSummarySchema(ProductInDBSchema):
     """Product summary schema without relationships (for lists)"""
     main_image_url: Optional[str] = None
-    category_names: List[str] = Field(default_factory=list)
+    category_name: Optional[str] = None
     in_stock: bool = False
     stock_quantity: Optional[int] = None
     

@@ -1,6 +1,4 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
-import { IsUUID, IsNumber, IsString, IsArray, ValidateNested, IsOptional, IsEnum } from 'class-validator';
-import { Type } from 'class-transformer';
 import { OrderItem } from './order.item.model'
 
 
@@ -48,6 +46,9 @@ export class Order {
   @Column({ type: 'uuid', nullable: true })
   paymentId: string; // Link to the payment service
 
+  @Column({ type: 'uuid', nullable: true })
+  reservationId: string;
+
   // @Column(() => Address) // Embed the Address object
   // shippingAddress: Address;
 
@@ -82,3 +83,4 @@ export class Order {
   @UpdateDateColumn()
   updatedAt: Date;
 }
+

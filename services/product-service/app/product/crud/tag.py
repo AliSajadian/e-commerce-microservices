@@ -104,7 +104,7 @@ class TagCRUD:
     async def delete_tag(self, tag_id: uuid.UUID) -> bool:
         """delete tag by id
         """
-        db_tag = self.read_tag_by_id(tag_id)       
+        db_tag = await self.read_tag_by_id(tag_id)       
         if not db_tag:
             return False
 

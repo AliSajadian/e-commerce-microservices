@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Path
 from ..crud import CategoryCRUD
 from ..schemas import CategoryCreateSchema, CategoryDetailSchema, CategoryUpdateSchema, CategoryResponseSchema
 from ...api.dependencies.database import get_category_service
-
+from app.utils.validation import safe_validate
 from ...api.dependencies.auth_utils import get_current_user_id
 from ...api.dependencies.schemas import TokenData
 # ============================================================================
@@ -37,7 +37,7 @@ async def get_category_tree(
     """API endpoint for listing all category hierarchy
     """
     categories = await category_service.read_category_tree()
-    return [CategoryDetailSchema.model_validate(cat) for cat in categories]
+    return [c for cat in categories if (c := safe_validate(CategoryDetailSchema, cat))]
 
 @routers.get("/{category_id}")
 async def get_category(    

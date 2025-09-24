@@ -4,8 +4,9 @@ from typing import List
 import uuid
 
 from ..schemas import ProductImageSchema, ProductImageCreateSchema, ProductImageUpdateSchema
-from ..crud import ProductImageCRUD, ProductCRUD
+from ..crud import ProductImageCRUD
 from ...api.dependencies.database import get_product_image_service
+from app.utils.validation import safe_validate
 
 # ============================================================================
 # ProductImages router endpoints
@@ -36,7 +37,7 @@ async def get_all_images(
     """API endpoint for listing all product_image resources
     """
     product_images = await product_image_service.read_all_images()
-    return [ProductImageSchema.model_validate(img) for img in product_images]
+    return [i for img in product_images if (i := safe_validate(ProductImageSchema, img))]
 
 @routers.get("/{product_image_id}", response_model=ProductImageSchema)
 async def get_image_by_id(
@@ -63,7 +64,7 @@ async def get_product_images(
     Retrieve product images by its ID.
     """
     product_images = await product_image_service.read_images_by_product_id(product_id)
-    return [ProductImageSchema.model_validate(img) for img in product_images]
+    return [i for img in product_images if (i := safe_validate(ProductImageSchema, img))]
 
 @routers.put("/{product_image_id}", response_model=ProductImageSchema)
 async def update_image(

@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Path
 from ..crud import InventoryCRUD
 from ..schemas.inventory import InventoryCreateSchema, InventorySchema, InventoryUpdateSchema
 from ...api.dependencies.database import get_inventory_service
+from app.utils.validation import safe_validate
 
 # ============================================================================
 # Inventory router Endpoints
@@ -36,7 +37,7 @@ async def get_all_inventories(
     """API endpoint for listing all inventory resources
     """
     inventories = await inventory_service.read_all_inventories()
-    return [InventorySchema.model_validate(inv) for inv in inventories]
+    return [i for inv in inventories if (i := safe_validate(InventorySchema, inv))]
 
 @routers.get("/{inventory_id}")
 async def get_inventory_by_id(

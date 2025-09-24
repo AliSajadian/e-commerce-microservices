@@ -83,8 +83,7 @@ class CategoryUpdateSchema(BaseModel):
 class CategoryInDBSchema(UUIDMixin, CategoryBaseSchema, TimestampMixin):
     """Complete category schema with database fields"""
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class CategorySchema(CategoryInDBSchema):
     """Public category schema with relationships"""

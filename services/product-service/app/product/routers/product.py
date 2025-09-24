@@ -5,6 +5,7 @@ import uuid
 
 from app.api.dependencies.database import get_product_service
 from app.api.dependencies.auth_utils import has_permission
+from app.utils.validation import safe_validate
 from app.product.schemas import ProductCreateSchema, ProductUpdateSchema, ProductSchema, InventorySchema
 from app.product.crud import ProductCRUD
 
@@ -34,8 +35,45 @@ async def get_all_products(
     """
     Retrieve a list of all products.
     """
+    # products = await product_service.read_all_products(skip=skip, limit=limit)
+    # return [p for prd in products if (p := safe_validate(ProductSchema, prd))]
     products = await product_service.read_all_products(skip=skip, limit=limit)
-    return [ProductSchema.model_validate(prd) for prd in products]
+    print(f"Found {len(products)} products in database")
+    
+    validated = []
+    for prd in products:
+        try:
+            p = ProductSchema.model_validate(prd)
+            validated.append(p)
+            print(f"✓ Successfully validated product: {prd.name}")
+        except Exception as e:
+            print(f"✗ Failed to validate product {prd.name}: {e}")
+    
+    return validated
+    
+    # try:
+    #     products = await product_service.read_all_products(skip=skip, limit=limit)
+        
+    #     result = []
+    #     for product in products:
+    #         try:
+    #             # Validate each product individually to catch specific validation errors
+    #             product_schema = ProductSchema.model_validate(product)
+    #             result.append(product_schema)
+    #         except ValidationError as e:
+    #             # Log the specific validation error for debugging
+    #             print(f"Validation error for product {product.id}: {e}")
+    #             # Skip invalid products or re-raise depending on your requirements
+    #             continue
+                
+    #     return result
+        
+    # except Exception as e:
+    #     print(f"Error in get_all_products: {e}")
+    #     raise HTTPException(
+    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #         detail=f"Error retrieving products: {str(e)}"
+    #     )
 
 @routers.get("/{product_id}", response_model=ProductSchema)
 async def get_product(
@@ -64,7 +102,7 @@ async def get_category_products(
         dict: The retrieved roles
     """
     products = await product_service.read_products_by_category_id(category_id)
-    return [ProductSchema.model_validate(cat) for cat in products]
+    return [p for prd in products if (p := safe_validate(ProductSchema, prd))]
 
 @routers.get("/{tag_id}/products")
 async def get_tag_products(    
@@ -81,7 +119,7 @@ async def get_tag_products(
         dict: The retrieved roles
     """
     products = await product_service.read_products_by_tag_id(tag_id)
-    return [ProductSchema.model_validate(cat) for cat in products]
+    return [p for prd in products if (p := safe_validate(ProductSchema, prd))]
 
 @routers.put("/{product_id}", response_model=ProductSchema)
 async def update_product(

@@ -135,8 +135,7 @@ class ProductImageCRUD:
     async def delete_image(self, product_image_id: UUID) -> bool:
         """delete product image by id
         """
-        stmt = select(ProductImage).where(ProductImage.id == product_image_id)
-        product_image = (await self.db_session.execute(stmt)).scalar_one_or_none()
+        product_image = await self.read_image_by_id(product_image_id)
         
         if not product_image:
             return False

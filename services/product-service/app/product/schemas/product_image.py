@@ -1,6 +1,6 @@
 import uuid
 from typing import Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from .base_schemas import TimestampMixin, UUIDMixin
 
 # ============================================================================
@@ -49,8 +49,7 @@ class ProductImageInDBSchema(UUIDMixin, ProductImageBaseSchema, TimestampMixin):
     """Complete product image schema with database fields"""
     product_id: uuid.UUID
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ProductImageSchema(ProductImageInDBSchema):
     """Public product image schema"""

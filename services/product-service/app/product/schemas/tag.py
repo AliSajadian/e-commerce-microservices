@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from .base_schemas import TimestampMixin, UUIDMixin
 
 # ============================================================================
@@ -39,8 +39,7 @@ class TagUpdateSchema(BaseModel):
 class TagInDBSchema(UUIDMixin, TagBaseSchema, TimestampMixin):
     """Complete tag schema with database fields"""
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class TagSchema(TagInDBSchema):
     """Public tag schema"""

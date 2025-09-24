@@ -28,3 +28,4 @@ export class OrderItem {
   @Column({ type: 'uuid' })
   orderId: string; // Foreign key to Order
 }
+
