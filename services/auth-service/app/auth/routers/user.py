@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Path
 
 from ..crud import UserCRUDs
-from ..schemas import UserCreateModel, UserModel
+from ..schemas import UserCreateModel, UserModel, UserUpdateModel
 from ...api.dependencies.database import AsyncDbSession
 
 
@@ -92,7 +92,7 @@ async def get_permissions_by_user_id(db: AsyncDbSession,
 
 
 @routers.patch("/{user_id}")
-async def update_user(db: AsyncDbSession, data: UserCreateModel, 
+async def update_user(db: AsyncDbSession, data: UserUpdateModel, 
                       user_id: UUID = Path(..., description="The user id, you want to update: ")):
     """Update by ID
 
@@ -104,15 +104,7 @@ async def update_user(db: AsyncDbSession, data: UserCreateModel,
         dict: the updated user
     """
     user_services = UserCRUDs(db)
-    user = await user_services.update( 
-        user_id, 
-        data={
-            "username": data.username, 
-            "first_name": data.first_name, 
-            "last_name": data.last_name,
-            "role_ids": data.role_ids
-        }
-    )
+    user = await user_services.update( user_id, data)
     return user
 
 

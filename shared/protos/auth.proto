@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package auth;
+
+service AuthService {
+  // Validate JWT token
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+  
+  // Get user information
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  
+  // Check user permissions
+  rpc CheckPermission(CheckPermissionRequest) returns (CheckPermissionResponse);
+  
+  // Get user profile
+  rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse);
+}
+
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message ValidateTokenResponse {
+  bool valid = 1;
+  string user_id = 2;
+  string username = 3;
+  string role = 4;
+  repeated string permissions = 5;
+  string error_message = 6;
+}
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message GetUserResponse {
+  bool success = 1;
+  string user_id = 2;
+  string username = 3;
+  string email = 4;
+  string first_name = 5;
+  string last_name = 6;
+  string role = 7;
+  bool is_active = 8;
+  string error_message = 9;
+}
+
+message CheckPermissionRequest {
+  string user_id = 1;
+  string permission = 2;
+}
+
+message CheckPermissionResponse {
+  bool has_permission = 1;
+  string error_message = 2;
+}
+
+message GetUserProfileRequest {
+  string user_id = 1;
+}
+
+message GetUserProfileResponse {
+  bool success = 1;
+  string user_id = 2;
+  string username = 3;
+  string email = 4;
+  string first_name = 5;
+  string last_name = 6;
+  string avatar = 7;
+  bool is_active = 8;
+  string created_at = 9;
+  string error_message = 10;
+}
+

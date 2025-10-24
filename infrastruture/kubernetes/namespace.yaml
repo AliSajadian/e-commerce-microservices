@@ -1,4 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: books-app
+  name: ecommerce
+  labels:
+    name: ecommerce
+    environment: production

@@ -11,14 +11,25 @@ export class PermissionsGuard implements CanActivate {
       context.getHandler(),
     );
 
+    console.log('Required permissions:', requiredPermissions);
+
     if (!requiredPermissions) {
       return true; // No permissions required, access granted
     }
 
     const { user } = context.switchToHttp().getRequest();
+    console.log('User from request:', user);
+    console.log('User permissions:', user?.permissions);
+    
     // Assuming the JWT payload is attached to req.user by your JwtStrategy
-    const userPermissions: string[] = user.permissions;
+    const userPermissions: string[] = user?.permissions || [];
 
-    return requiredPermissions.some(permission => userPermissions?.includes(permission));
+    const hasPermission = requiredPermissions.some(permission => 
+      userPermissions.includes(permission)
+    );
+    
+    console.log('Has permission:', hasPermission);
+    return hasPermission;
+
   }
 }

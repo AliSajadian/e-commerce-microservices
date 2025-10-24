@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
-import { ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -43,6 +43,7 @@ export class OrderController {
     return this.orderService.createOrder(createOrderDto);
   }  
 
+  @ApiBearerAuth('JWT-auth') 
   @UseGuards(JwtAuthGuard, PermissionsGuard) // This line protects the endpoint
   @Permissions('order:read')
   @Get(':id')
@@ -57,15 +58,17 @@ export class OrderController {
     return this.orderService.getAllOrders();
   }
 
+  @ApiBearerAuth('JWT-auth') 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @Permissions('order:read')
+  @Permissions('order:write')
   @Put(':id/status')
   async updateStatus(@Param('id') id: string, @Body('status') newStatus: OrderStatus): Promise<IOrder> {
     return this.orderService.updateOrderStatus(id, newStatus);
   }
-
+  
+  @ApiBearerAuth('JWT-auth') 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @Permissions('order:read')
+  @Permissions('order:write')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string): Promise<void> {

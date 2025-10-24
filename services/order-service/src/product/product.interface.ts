@@ -33,7 +33,8 @@ export interface ProductReservationItem {
 
 export interface ReserveProductsRequest {
   products: ProductReservationItem[];
-  reservationId?: string;
+  reservation_id?: string;
+  user_id?: string; // New field for user ID
 }
 
 export interface ProductReservationResult {
@@ -44,14 +45,14 @@ export interface ProductReservationResult {
 }
 
 export interface ReserveProductsResponse {
-  allReserved: boolean;
+  all_reserved: boolean;  // Change from all_reserved
   results: ProductReservationResult[];
-  reservationId: string;
+  reservation_id: string; // Change from reservation_id
 }
 
 export interface ReleaseReservationRequest {
   products: ProductReservationItem[];
-  reservationId: string;
+  reservation_id: string; // Change from reservation_id
 }
 
 export interface ReleaseReservationResponse {

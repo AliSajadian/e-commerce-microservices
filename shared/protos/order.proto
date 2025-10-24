@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package order;
+
+service OrderService {
+  // Get order details
+  rpc GetOrder(GetOrderRequest) returns (GetOrderResponse);
+  
+  // Update order status
+  rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (UpdateOrderStatusResponse);
+  
+  // Get order items
+  rpc GetOrderItems(GetOrderItemsRequest) returns (GetOrderItemsResponse);
+  
+  // Validate order for payment
+  rpc ValidateOrderForPayment(ValidateOrderForPaymentRequest) returns (ValidateOrderForPaymentResponse);
+}
+
+message GetOrderRequest {
+  string order_id = 1;
+}
+
+message GetOrderResponse {
+  bool success = 1;
+  string order_id = 2;
+  string user_id = 3;
+  string status = 4;
+  double total_amount = 5;
+  string currency = 6;
+  string created_at = 7;
+  string updated_at = 8;
+  string error_message = 9;
+}
+
+message UpdateOrderStatusRequest {
+  string order_id = 1;
+  string status = 2;
+  string reason = 3;
+}
+
+message UpdateOrderStatusResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message GetOrderItemsRequest {
+  string order_id = 1;
+}
+
+message OrderItem {
+  string product_id = 1;
+  string product_name = 2;
+  int32 quantity = 3;
+  double unit_price = 4;
+  double total_price = 5;
+}
+
+message GetOrderItemsResponse {
+  bool success = 1;
+  repeated OrderItem items = 2;
+  string error_message = 3;
+}
+
+message ValidateOrderForPaymentRequest {
+  string order_id = 1;
+  double payment_amount = 2;
+}
+
+message ValidateOrderForPaymentResponse {
+  bool valid = 1;
+  string order_id = 2;
+  double expected_amount = 3;
+  string currency = 4;
+  string error_message = 5;
+}
+

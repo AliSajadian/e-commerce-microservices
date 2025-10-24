@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError, NoResultFound, SQLAlchemyError # Import SQLAlchemyError for broader DB errors
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.schemas.user import UserCreateModel, UserModel
+from app.auth.schemas.user import UserCreateModel, UserModel, UserRoleUpdateModel, UserUpdateModel
 from app.auth.crud.permission import PermissionCRUDs
 from app.auth.models import User, Role
 from app.auth.exceptions import ObjectAlreadyRegistered, ObjectCreationError, ObjectNotFoundError
@@ -23,7 +23,7 @@ class UserCRUDs:
 
 
     async def get_by_username(
-        self, db: AsyncSession, username: str 
+        self, username: str 
     ):
         """
         Get user by username
@@ -141,7 +141,7 @@ class UserCRUDs:
             raise ObjectCreationError(f"An internal server error occurred: {e}") from e
 
 
-    async def get_all(self ):
+    async def get_all(self):
         """
         Get all users objects from db
         """
@@ -236,27 +236,76 @@ class UserCRUDs:
 
 
     async def update(
-        self, user_id: UUID, data
+        self, user_id: UUID, data: UserUpdateModel
     ):
         """
-        Update User by id
+        Update User by id (includes roles, excludes password)
         """
-        statement = select(User).filter(User.id == user_id)
-
-        result = await self.db.execute(statement)
-        user = result.scalars().scalar_one_or_none()
-
+        user = await self.get_by_id(user_id)
+        
         if not user:
             logging.warning(f"User {user_id} not found.")
             raise ObjectNotFoundError(user_id)
         
-        user.name = data["name"]
-        user.username = data["username"]
-
+        # Only update fields that are provided (not None)
+        update_data = data.model_dump(exclude_unset=True)
+        
+        # Handle role updates separately
+        if 'role_ids' in update_data:
+            role_ids = update_data.pop('role_ids')
+            if role_ids:  # Only update if role_ids is provided and not empty
+                # Verify roles exist
+                role_statement = select(Role).filter(Role.id.in_(role_ids))
+                role_result = await self.db.execute(role_statement)
+                roles = role_result.scalars().all()
+                
+                if len(roles) != len(role_ids):
+                    raise ValueError("One or more role IDs are invalid")
+                
+                user.roles = roles
+        
+        # Update other fields
+        for field, value in update_data.items():
+            if hasattr(user, field):
+                setattr(user, field, value)
+        
         await self.db.commit()
         await self.db.refresh(user)
-
+        
         logging.info(f"Successfully updated user {user_id}.")
+        return user
+
+    # NEW: Separate method for updating user roles (admin only)
+    async def update_user_roles(
+        self, user_id: UUID, role_data: UserRoleUpdateModel
+    ):
+        """
+        Update user roles (admin endpoint)
+        """
+        statement = select(User).filter(User.id == user_id)
+        
+        result = await self.db.execute(statement)
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            logging.warning(f"User {user_id} not found.")
+            raise ObjectNotFoundError(user_id)
+        
+        # Verify roles exist
+        role_statement = select(Role).filter(Role.id.in_(role_data.role_ids))
+        role_result = await self.db.execute(role_statement)
+        roles = role_result.scalars().all()
+        
+        if len(roles) != len(role_data.role_ids):
+            raise ValueError("One or more role IDs are invalid")
+        
+        # Update user roles
+        user.roles = roles
+        
+        await self.db.commit()
+        await self.db.refresh(user)
+        
+        logging.info(f"Successfully updated roles for user {user_id}.")
         return user
 
 

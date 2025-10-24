@@ -1,47 +1,311 @@
+version: '3.8'
+
 services:
-  db-books:
-    image: postgres:17
-    container_name: product_service_db
+  # Infrastructure Services
+  postgres-auth:
+    image: postgres:15-alpine
+    container_name: postgres-auth
     environment:
+      POSTGRES_DB: db_auth
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: admin
-      POSTGRES_DB: db_product
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     networks:
-      - microservices_network  # Best practice: explicitly add it to the same network
+      - microservices_network
+    restart: unless-stopped
+
+  postgres-product:
+    image: postgres:15-alpine
+    container_name: postgres-product
+    environment:
+      POSTGRES_DB: db_product
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - postgres_product_data:/var/lib/postgresql/data
     ports:
       - "5433:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: always  # Best practice: restart the container if it fails
-
-  product:
-    image: product_service_image
-    container_name: product_service
-    build: 
-      context: .
-      dockerfile: Dockerfile
-    depends_on:
-      - db-product
-    environment:
-      ASYNC_DATABASE_URL: postgresql+asyncpg://postgres:admin@db-product:5432/db_product
     networks:
-      - default
       - microservices_network
-    ports:
-      - "8000:8000"    # HTTP/REST API
-      - "50051:50051"  # gRPC
+    restart: unless-stopped
+
+  postgres-order:
+    image: postgres:15-alpine
+    container_name: postgres-order
+    environment:
+      POSTGRES_DB: db_order
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
     volumes:
-      - .:/app
-    working_dir: /app
-    restart: always  # Best practice: restart the container if it fails
+      - postgres_order_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    networks:
+      - microservices_network
+    restart: unless-stopped
+
+  postgres-payment:
+    image: postgres:15-alpine
+    container_name: postgres-payment
+    environment:
+      POSTGRES_DB: db_payment
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - postgres_payment_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    networks:
+      - microservices_network
+    restart: unless-stopped
+
+  postgres-notification:
+    image: postgres:15-alpine
+    container_name: postgres-notification
+    environment:
+      POSTGRES_DB: db_notification
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - postgres_notification_data:/var/lib/postgresql/data
+    ports:
+      - "5436:5432"
+    networks:
+      - microservices_network
+    restart: unless-stopped
+
+  mongodb-review:
+    image: mongo:7
+    container_name: mongodb-review
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: db_review
+    volumes:
+      - mongodb_review_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - microservices_network
+    restart: unless-stopped
+
+  mongodb-recommendation:
+    image: mongo:7
+    container_name: mongodb-recommendation
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: db_recommendation
+    volumes:
+      - mongodb_recommendation_data:/data/db
+    ports:
+      - "27018:27017"
+    networks:
+      - microservices_network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    command: redis-server --requirepass admin
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - microservices_network
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - microservices_network
+    restart: unless-stopped
+
+  # Microservices
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:admin@postgres-auth:5432/db_auth
+      - REDIS_URL=redis://:admin@redis:6379/0
+      - SECRET_KEY=your-secret-key-here
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - REFRESH_EXPIRE_DAYS=7
+    ports:
+      - "8000:8000"
+      - "50051:50051"
+    depends_on:
+      - postgres-auth
+      - redis
+    networks:
+      - microservices_network
+    restart: unless-stopped
+
+  product-service:
+    build:
+      context: ./services/product-service
+      dockerfile: Dockerfile
+    container_name: product-service
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:admin@postgres-product:5432/db_product
+      - REDIS_URL=redis://:admin@redis:6379/1
+    ports:
+      - "8001:8000"
+      - "50052:50051"
+    depends_on:
+      - postgres-product
+      - redis
+    networks:
+      - microservices_network
+    restart: unless-stopped
+
+  order-service:
+    build:
+      context: ./services/order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    environment:
+      - DATABASE_URL=postgresql://postgres:admin@postgres-order:5432/db_order
+      - AUTH_SERVICE_URL=grpc://auth-service:50051
+      - PRODUCT_SERVICE_URL=grpc://product-service:50052
+      - PAYMENT_SERVICE_URL=grpc://payment-service:50053
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672/
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres-order
+      - auth-service
+      - product-service
+      - payment-service
+      - rabbitmq
+    networks:
+      - microservices_network
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    environment:
+      - DATABASE_URL=postgresql://postgres:admin@postgres-payment:5432/db_payment
+      - STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+      - STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672/
+    ports:
+      - "3001:3000"
+      - "50053:50051"
+    depends_on:
+      - postgres-payment
+      - rabbitmq
+    networks:
+      - microservices_network
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    environment:
+      - DATABASE_URL=postgresql://postgres:admin@postgres-notification:5432/db_notification
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672/
+      - FIREBASE_SERVER_KEY=your-firebase-server-key
+      - SENDGRID_API_KEY=your-sendgrid-api-key
+    ports:
+      - "3002:3000"
+    depends_on:
+      - postgres-notification
+      - rabbitmq
+    networks:
+      - microservices_network
+    restart: unless-stopped
+
+  review-service:
+    build:
+      context: ./services/review-service
+      dockerfile: Dockerfile
+    container_name: review-service
+    environment:
+      - MONGODB_URL=mongodb://admin:admin@mongodb-review:27017/db_review?authSource=admin
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672/
+    ports:
+      - "8002:8000"
+      - "50054:50051"
+    depends_on:
+      - mongodb-review
+      - rabbitmq
+    networks:
+      - microservices_network
+    restart: unless-stopped
+
+  recommendation-service:
+    build:
+      context: ./services/recommandation-service
+      dockerfile: Dockerfile
+    container_name: recommendation-service
+    environment:
+      - MONGODB_URL=mongodb://admin:admin@mongodb-recommendation:27017/db_recommendation?authSource=admin
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672/
+    ports:
+      - "8003:8000"
+      - "50055:50051"
+    depends_on:
+      - mongodb-recommendation
+      - rabbitmq
+    networks:
+      - microservices_network
+    restart: unless-stopped
+
+  # API Gateway
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-gateway
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./api-gateway/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./api-gateway/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - auth-service
+      - product-service
+      - order-service
+      - payment-service
+      - notification-service
+      - review-service
+      - recommendation-service
+    networks:
+      - microservices_network
+    restart: unless-stopped
+
+volumes:
+  postgres_auth_data:
+  postgres_product_data:
+  postgres_order_data:
+  postgres_payment_data:
+  postgres_notification_data:
+  mongodb_review_data:
+  mongodb_recommendation_data:
+  redis_data:
+  rabbitmq_data:
 
 networks:
   microservices_network:
-    external: true
-  default:
-    driver: bridge  # Explicitly set default network type
-    # enable_ipv6: false  # Disable IPv6 for the default network
-
-volumes:
-  postgres_data:
-    driver: local  # Explicitly define volume driver
+    driver: bridge

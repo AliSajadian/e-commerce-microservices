@@ -1,21 +1,58 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: app-config
-  namespace: books-app
+  name: ecommerce-config
+  namespace: ecommerce
 data:
-  # Add other non-sensitive configurations here
-  # ASYNC_DATABASE_URL: "postgresql+asyncpg://postgres:admin@postgresql-auth-svc:5432/db_auth"
-  ALGORITHM: "HS256"
-  ACCESS_TOKEN_EXPIRE_MINUTES: "30"
-  REFRESH_EXPIRE_DAYS: "40"
-
-  REDIS_HOST: redis-public-svc
+  # Database configurations
+  POSTGRES_HOST: "postgresql"
+  POSTGRES_PORT: "5432"
+  
+  # Redis configuration
+  REDIS_HOST: "redis"
   REDIS_PORT: "6379"
-
-  RABBITMQ_HOST: rabbitmq-svc
+  
+  # RabbitMQ configuration
+  RABBITMQ_HOST: "rabbitmq"
   RABBITMQ_PORT: "5672"
-  RABBITMQ_USER: "guest"
-  RABBITMQ_PASS: "guest"
-  RABBITMQ_URL: "amqp://guest:guest@rabbitmq-public-svc:5672/"
-  USER_EVENTS_EXCHANGE_NAME: "user.events"
+  RABBITMQ_USER: "admin"
+  
+  # MongoDB configuration
+  MONGODB_HOST: "mongodb"
+  MONGODB_PORT: "27017"
+  
+  # Service URLs
+  AUTH_SERVICE_URL: "http://auth-service:8000"
+  PRODUCT_SERVICE_URL: "http://product-service:8000"
+  ORDER_SERVICE_URL: "http://order-service:3000"
+  PAYMENT_SERVICE_URL: "http://payment-service:3000"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:3000"
+  REVIEW_SERVICE_URL: "http://review-service:8000"
+  RECOMMENDATION_SERVICE_URL: "http://recommendation-service:8000"
+  
+  # gRPC URLs
+  AUTH_GRPC_URL: "auth-service:50051"
+  PRODUCT_GRPC_URL: "product-service:50051"
+  PAYMENT_GRPC_URL: "payment-service:50051"
+  
+  # JWT Configuration
+  JWT_ALGORITHM: "HS256"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+  REFRESH_EXPIRE_DAYS: "7"
+  
+  # Rate limiting
+  RATE_LIMIT_REQUESTS: "100"
+  RATE_LIMIT_WINDOW: "60"
+  
+  # Logging
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  
+  # Monitoring
+  METRICS_ENABLED: "true"
+  HEALTH_CHECK_INTERVAL: "30"
+  
+  # Feature flags
+  ENABLE_CACHING: "true"
+  ENABLE_METRICS: "true"
+  ENABLE_TRACING: "true"

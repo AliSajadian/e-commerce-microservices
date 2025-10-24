@@ -1,19 +1,14 @@
 export enum PaymentStatus {
-  // Stripe PaymentIntent statuses
-  REQUIRES_PAYMENT_METHOD = 'requires_payment_method',
-  REQUIRES_CONFIRMATION = 'requires_confirmation',
-  REQUIRES_ACTION = 'requires_action',
-  PROCESSING = 'processing',
-  REQUIRES_CAPTURE = 'requires_capture',
-  CANCELED = 'canceled',
-  SUCCEEDED = 'succeeded',
-  
-  // Custom statuses for our application
-  CREATED = 'created',
-  PENDING = 'pending',
-  PAYMENT_FAILED = 'payment_failed',
-  REFUNDED = 'refunded',
-  PARTIALLY_REFUNDED = 'partially_refunded',
+  PAYMENT_STATUS_UNSPECIFIED = 'unspecified',
+  PAYMENT_STATUS_PENDING = 'payment_pending',
+  PAYMENT_STATUS_PROCESSING = 'payment_processing',
+  PAYMENT_STATUS_COMPLETED = 'payment_completed',
+  PAYMENT_STATUS_FAILED = 'payment_failed',
+  PAYMENT_STATUS_CANCELLED = 'payment_cancelled',
+  PAYMENT_STATUS_REFUNDED = 'payment_refunded',
+  PAYMENT_STATUS_PARTIALLY_REFUNDED = 'payment_partially_refunded',
+  PAYMENT_STATUS_EXPIRED = 'payment_expired',
+  PAYMENT_STATUS_REQUIRES_ACTION = 'payment_requires_action', // For 3D Secure, etc.
 }
 
 /**
@@ -21,23 +16,27 @@ export enum PaymentStatus {
  */
 export function mapStripeStatusToPaymentStatus(stripeStatus: string): PaymentStatus {
   switch (stripeStatus) {
-    case 'requires_payment_method':
-      return PaymentStatus.REQUIRES_PAYMENT_METHOD;
-    case 'requires_confirmation':
-      return PaymentStatus.REQUIRES_CONFIRMATION;
-    case 'requires_action':
-      return PaymentStatus.REQUIRES_ACTION;
-    case 'processing':
-      return PaymentStatus.PROCESSING;
-    case 'requires_capture':
-      return PaymentStatus.REQUIRES_CAPTURE;
-    case 'canceled':
-      return PaymentStatus.CANCELED;
-    case 'succeeded':
-      return PaymentStatus.SUCCEEDED;
+    case 'payment_pending':
+      return PaymentStatus.PAYMENT_STATUS_PENDING;
+    case 'payment_processing':
+      return PaymentStatus.PAYMENT_STATUS_PROCESSING;
+    case 'payment_completed':
+      return PaymentStatus.PAYMENT_STATUS_COMPLETED;
+    case 'payment_failed':
+      return PaymentStatus.PAYMENT_STATUS_FAILED;
+    case 'payment_cancelled':
+      return PaymentStatus.PAYMENT_STATUS_CANCELLED;
+    case 'payment_refunded':
+      return PaymentStatus.PAYMENT_STATUS_REFUNDED;
+    case 'payment_partially_refunded':
+      return PaymentStatus.PAYMENT_STATUS_PARTIALLY_REFUNDED;
+    case 'payment_expired':
+      return PaymentStatus.PAYMENT_STATUS_EXPIRED;
+    case 'payment_requires_action':
+      return PaymentStatus.PAYMENT_STATUS_REQUIRES_ACTION;
     default:
-      // For any unknown status, map to pending
-      return PaymentStatus.PENDING;
+      // For any unknown status, map to unspecified
+      return PaymentStatus.PAYMENT_STATUS_UNSPECIFIED;
   }
 }
 
@@ -45,7 +44,7 @@ export function mapStripeStatusToPaymentStatus(stripeStatus: string): PaymentSta
  * Check if payment status indicates a successful payment
  */
 export function isPaymentSuccessful(status: PaymentStatus): boolean {
-  return status === PaymentStatus.SUCCEEDED;
+  return status === PaymentStatus.PAYMENT_STATUS_COMPLETED;
 }
 
 /**
@@ -53,8 +52,8 @@ export function isPaymentSuccessful(status: PaymentStatus): boolean {
  */
 export function isPaymentFailed(status: PaymentStatus): boolean {
   return [
-    PaymentStatus.PAYMENT_FAILED,
-    PaymentStatus.CANCELED,
+    PaymentStatus.PAYMENT_STATUS_FAILED,
+    PaymentStatus.PAYMENT_STATUS_CANCELLED,
   ].includes(status);
 }
 
@@ -63,12 +62,8 @@ export function isPaymentFailed(status: PaymentStatus): boolean {
  */
 export function isPaymentPending(status: PaymentStatus): boolean {
   return [
-    PaymentStatus.CREATED,
-    PaymentStatus.PENDING,
-    PaymentStatus.REQUIRES_PAYMENT_METHOD,
-    PaymentStatus.REQUIRES_CONFIRMATION,
-    PaymentStatus.REQUIRES_ACTION,
-    PaymentStatus.PROCESSING,
-    PaymentStatus.REQUIRES_CAPTURE,
+    PaymentStatus.PAYMENT_STATUS_PENDING,
+    PaymentStatus.PAYMENT_STATUS_PROCESSING,
+    PaymentStatus.PAYMENT_STATUS_REQUIRES_ACTION,
   ].includes(status);
 }

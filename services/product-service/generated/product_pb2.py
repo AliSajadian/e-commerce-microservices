@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rproduct.proto\x12\x07product\"\'\n\x11GetProductRequest\x12\x12\n\nproduct_id\x18\x01 \x01(\t\"\xc9\x01\n\x12GetProductResponse\x12\x12\n\nproduct_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\x12\r\n\x05price\x18\x04 \x01(\x01\x12\x16\n\x0estock_quantity\x18\x05 \x01(\x05\x12\x19\n\x11reserved_quantity\x18\x06 \x01(\x05\x12\x1a\n\x12\x61vailable_quantity\x18\x07 \x01(\x05\x12\x11\n\tis_active\x18\x08 \x01(\x08\x12\x0b\n\x03sku\x18\t \x01(\t\"1\n\x1aGetMultipleProductsRequest\x12\x13\n\x0bproduct_ids\x18\x01 \x03(\t\"L\n\x1bGetMultipleProductsResponse\x12-\n\x08products\x18\x01 \x03(\x0b\x32\x1b.product.GetProductResponse\">\n\x16ProductReservationItem\x12\x12\n\nproduct_id\x18\x01 \x01(\t\x12\x10\n\x08quantity\x18\x02 \x01(\x05\"c\n\x16ReserveProductsRequest\x12\x31\n\x08products\x18\x01 \x03(\x0b\x32\x1f.product.ProductReservationItem\x12\x16\n\x0ereservation_id\x18\x02 \x01(\t\"k\n\x18ProductReservationResult\x12\x12\n\nproduct_id\x18\x01 \x01(\t\x12\x0f\n\x07success\x18\x02 \x01(\x08\x12\x19\n\x11reserved_quantity\x18\x03 \x01(\x05\x12\x0f\n\x07message\x18\x04 \x01(\t\"{\n\x17ReserveProductsResponse\x12\x14\n\x0c\x61ll_reserved\x18\x01 \x01(\x08\x12\x32\n\x07results\x18\x02 \x03(\x0b\x32!.product.ProductReservationResult\x12\x16\n\x0ereservation_id\x18\x03 \x01(\t\"f\n\x19ReleaseReservationRequest\x12\x31\n\x08products\x18\x01 \x03(\x0b\x32\x1f.product.ProductReservationItem\x12\x16\n\x0ereservation_id\x18\x02 \x01(\t\">\n\x1aReleaseReservationResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t2\xee\x02\n\x0eProductService\x12\x45\n\nGetProduct\x12\x1a.product.GetProductRequest\x1a\x1b.product.GetProductResponse\x12`\n\x13GetMultipleProducts\x12#.product.GetMultipleProductsRequest\x1a$.product.GetMultipleProductsResponse\x12T\n\x0fReserveProducts\x12\x1f.product.ReserveProductsRequest\x1a .product.ReserveProductsResponse\x12]\n\x12ReleaseReservation\x12\".product.ReleaseReservationRequest\x1a#.product.ReleaseReservationResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rproduct.proto\x12\x07product\"\'\n\x11GetProductRequest\x12\x12\n\nproduct_id\x18\x01 \x01(\t\"\xc9\x01\n\x12GetProductResponse\x12\x12\n\nproduct_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\x12\r\n\x05price\x18\x04 \x01(\x01\x12\x16\n\x0estock_quantity\x18\x05 \x01(\x05\x12\x19\n\x11reserved_quantity\x18\x06 \x01(\x05\x12\x1a\n\x12\x61vailable_quantity\x18\x07 \x01(\x05\x12\x11\n\tis_active\x18\x08 \x01(\x08\x12\x0b\n\x03sku\x18\t \x01(\t\"1\n\x1aGetMultipleProductsRequest\x12\x13\n\x0bproduct_ids\x18\x01 \x03(\t\"L\n\x1bGetMultipleProductsResponse\x12-\n\x08products\x18\x01 \x03(\x0b\x32\x1b.product.GetProductResponse\">\n\x16ProductReservationItem\x12\x12\n\nproduct_id\x18\x01 \x01(\t\x12\x10\n\x08quantity\x18\x02 \x01(\x05\"t\n\x16ReserveProductsRequest\x12\x31\n\x08products\x18\x01 \x03(\x0b\x32\x1f.product.ProductReservationItem\x12\x16\n\x0ereservation_id\x18\x02 \x01(\t\x12\x0f\n\x07user_id\x18\x03 \x01(\t\"k\n\x18ProductReservationResult\x12\x12\n\nproduct_id\x18\x01 \x01(\t\x12\x0f\n\x07success\x18\x02 \x01(\x08\x12\x19\n\x11reserved_quantity\x18\x03 \x01(\x05\x12\x0f\n\x07message\x18\x04 \x01(\t\"{\n\x17ReserveProductsResponse\x12\x14\n\x0c\x61ll_reserved\x18\x01 \x01(\x08\x12\x32\n\x07results\x18\x02 \x03(\x0b\x32!.product.ProductReservationResult\x12\x16\n\x0ereservation_id\x18\x03 \x01(\t\"f\n\x19ReleaseReservationRequest\x12\x31\n\x08products\x18\x01 \x03(\x0b\x32\x1f.product.ProductReservationItem\x12\x16\n\x0ereservation_id\x18\x02 \x01(\t\">\n\x1aReleaseReservationResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t2\xee\x02\n\x0eProductService\x12\x45\n\nGetProduct\x12\x1a.product.GetProductRequest\x1a\x1b.product.GetProductResponse\x12`\n\x13GetMultipleProducts\x12#.product.GetMultipleProductsRequest\x1a$.product.GetMultipleProductsResponse\x12T\n\x0fReserveProducts\x12\x1f.product.ReserveProductsRequest\x1a .product.ReserveProductsResponse\x12]\n\x12ReleaseReservation\x12\".product.ReleaseReservationRequest\x1a#.product.ReleaseReservationResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -42,15 +42,15 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_PRODUCTRESERVATIONITEM']._serialized_start=400
   _globals['_PRODUCTRESERVATIONITEM']._serialized_end=462
   _globals['_RESERVEPRODUCTSREQUEST']._serialized_start=464
-  _globals['_RESERVEPRODUCTSREQUEST']._serialized_end=563
-  _globals['_PRODUCTRESERVATIONRESULT']._serialized_start=565
-  _globals['_PRODUCTRESERVATIONRESULT']._serialized_end=672
-  _globals['_RESERVEPRODUCTSRESPONSE']._serialized_start=674
-  _globals['_RESERVEPRODUCTSRESPONSE']._serialized_end=797
-  _globals['_RELEASERESERVATIONREQUEST']._serialized_start=799
-  _globals['_RELEASERESERVATIONREQUEST']._serialized_end=901
-  _globals['_RELEASERESERVATIONRESPONSE']._serialized_start=903
-  _globals['_RELEASERESERVATIONRESPONSE']._serialized_end=965
-  _globals['_PRODUCTSERVICE']._serialized_start=968
-  _globals['_PRODUCTSERVICE']._serialized_end=1334
+  _globals['_RESERVEPRODUCTSREQUEST']._serialized_end=580
+  _globals['_PRODUCTRESERVATIONRESULT']._serialized_start=582
+  _globals['_PRODUCTRESERVATIONRESULT']._serialized_end=689
+  _globals['_RESERVEPRODUCTSRESPONSE']._serialized_start=691
+  _globals['_RESERVEPRODUCTSRESPONSE']._serialized_end=814
+  _globals['_RELEASERESERVATIONREQUEST']._serialized_start=816
+  _globals['_RELEASERESERVATIONREQUEST']._serialized_end=918
+  _globals['_RELEASERESERVATIONRESPONSE']._serialized_start=920
+  _globals['_RELEASERESERVATIONRESPONSE']._serialized_end=982
+  _globals['_PRODUCTSERVICE']._serialized_start=985
+  _globals['_PRODUCTSERVICE']._serialized_end=1351
 # @@protoc_insertion_point(module_scope)

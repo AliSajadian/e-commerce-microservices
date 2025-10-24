@@ -7,7 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 import app.product.models
-from app.grpc_server import start_grpc_server_background, stop_grpc_server_background
+from app.grpc_server import GrpcServerManager, start_grpc_server_background, stop_grpc_server_background
 from app.core.database import init_db_connection
 from .api.v1.routers import register_routes
 from .api.exceptions import validation_exception_handler, http_exception_handler, general_exception_handler
@@ -20,22 +20,39 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting up database connection...")
-    await init_db_connection() # Assuming you have this function
+    await init_db_connection()
     logger.info("Database connection established.")
     
     logger.info("Application startup: Initializing gRPC server...")
-    # Start the gRPC server as a background task in the main event loop
-    asyncio.create_task(start_grpc_server_background())
-    logger.info("Application startup: gRPC server background task initiated.")
     
-    # Yield control to the application, which will handle requests
-    yield
+    # Use the context manager approach (Option 3)
+    grpc_server_manager = GrpcServerManager()
+    server_context = await grpc_server_manager.__aenter__()
     
-    # This code runs on shutdown
-    logger.info("Application shutdown: Stopping gRPC server...")
-    await stop_grpc_server_background()
-    logger.info("Application shutdown: gRPC server stopped.")
+    try:
+        # Start the server task in the background
+        server_task = asyncio.create_task(server_context.server.wait_for_termination())
+        logger.info("Application startup: gRPC server started with context manager.")
         
+        # Yield control to the application
+        yield
+        
+    finally:
+        # This code runs on shutdown
+        logger.info("Application shutdown: Stopping gRPC server...")
+        
+        # Cancel the server task first
+        if not server_task.done():
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+        
+        # Then properly exit the context manager
+        await grpc_server_manager.__aexit__(None, None, None)
+        logger.info("Application shutdown: gRPC server stopped.")
+                
 tags_metadata = [
     # {
     #     "name": "Authentication", 

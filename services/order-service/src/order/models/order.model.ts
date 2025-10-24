@@ -5,9 +5,12 @@ import { OrderItem } from './order.item.model'
 export enum OrderStatus {
   PENDING = 'pending',
   PAID = 'paid',
+  CONFIRMED = 'confirmed',
   SHIPPED = 'shipped',
   DELIVERED = 'delivered',
-  CANCELED = 'canceled',
+  FULFILLED = 'fulfilled',
+  FAILED = 'failed',
+  CANCELLED = 'cancelled',
   REFUNDED = 'refunded',
 }
 

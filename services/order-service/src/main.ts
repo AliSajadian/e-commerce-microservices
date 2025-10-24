@@ -1,8 +1,15 @@
+console.log('='.repeat(50));
+console.log('🚀 MAIN.TS IS RUNNING - THIS SHOULD ALWAYS SHOW');
+console.log('='.repeat(50));
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
+  console.log('🚀 Starting application...');
+
+  try{
   const app = await NestFactory.create(AppModule);
 
   // Set the global prefix, but exclude the 'health' and 'ready' endpoints
@@ -43,11 +50,26 @@ async function bootstrap() {
     .setDescription('The API documentation for the Order microservice')
     .setVersion('1.0')
     .addTag('orders')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth', // This is the unique name for the security scheme
+    )
     .build();
     
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
   await app.listen(3000);
+  console.log('✅ Application is listening on port 3000');
+  } catch (error) {
+    console.error('❌ Error during bootstrap:', error);
+  }
 }
 bootstrap();

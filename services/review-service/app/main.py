@@ -6,10 +6,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Import the new background server functions
 from app.grpc_server import start_grpc_server_background, stop_grpc_server_background
-from .api.v1.routers import register_routes
+from app.api.v1.routers import register_routes
         
-from app.core.database import init_db_connection # If you have this for DB lifespan
-from app.core.rabbitmq import connect_rabbitmq, disconnect_rabbitmq # NEW
+from app.core.database import init_db_connection
+from app.core.rabbitmq import connect_rabbitmq, disconnect_rabbitmq
 
 # Configure logging at the top level
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     # Initialize database connection
     logger.info("Starting up database connection...")
-    await init_db_connection() # Assuming you have this function
+    await init_db_connection()
     logger.info("Database connection established.")
 
     # Connect to RabbitMQ
@@ -49,23 +49,19 @@ async def lifespan(app: FastAPI):
 
 tags_metadata = [
     {
-        "name": "Auth", 
-        "description": "Routes for operations related to authentication and authorization"
+        "name": "Reviews", 
+        "description": "Routes for operations related to product reviews and ratings"
     },
-    # {
-    #     "name": "Book Authors",
-    #     "description": "Routes for operations related to authors",
-    # },
-    # {
-    #     "name": "Books",
-    #     "description": "Routes for operations related to books",
-    # },
+    {
+        "name": "Moderation",
+        "description": "Routes for review moderation and management"
+    },
 ]
 
 # Pass the lifespan context manager to the FastAPI app
 app = FastAPI(
-    title="Auth API", 
-    description="This is authentication and authorization service", 
+    title="Review Service API", 
+    description="This is a review and rating service for e-commerce products", 
     version="0.0.1", 
     contact={
         "name": "Ali Sajadian",
@@ -82,7 +78,7 @@ app = FastAPI(
 # ... your other FastAPI routes and code ...
 @app.get("/")
 async def read_root():
-    return {"message": "Auth Service REST API is running"}
+    return {"message": "Review Service REST API is running"}
 
 @app.get("/health")
 async def health():

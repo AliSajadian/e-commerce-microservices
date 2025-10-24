@@ -14,6 +14,7 @@ export interface IOrder {
   id: string;
   userId: string;
   items: OrderItem[];
+  reservationId: string;
   shippingAddress?: AddressDto; // Optional, can be an AddressDto in a more complex scenario
   notes?: string; // Optional notes for the order
   totalPrice: number;

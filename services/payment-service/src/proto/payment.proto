@@ -1,0 +1,225 @@
+
+syntax = "proto3";
+
+package payment;
+
+import "google/protobuf/timestamp.proto";
+
+// Payment Service Definition
+service PaymentService {
+  // Initiate a new payment
+  rpc InitiatePayment(InitiatePaymentRequest) returns (InitiatePaymentResponse);
+  
+  // Get payment status
+  rpc GetPaymentStatus(GetPaymentStatusRequest) returns (GetPaymentStatusResponse);
+  
+  // Confirm payment (for two-phase payments)
+  rpc ConfirmPayment(ConfirmPaymentRequest) returns (ConfirmPaymentResponse);
+  
+  // Cancel/Refund payment
+  rpc CancelPayment(CancelPaymentRequest) returns (CancelPaymentResponse);
+  
+  // Process refund
+  rpc ProcessRefund(ProcessRefundRequest) returns (ProcessRefundResponse);
+  
+  // Get payment details
+  rpc GetPaymentDetails(GetPaymentDetailsRequest) returns (GetPaymentDetailsResponse);
+}
+
+// Money representation
+message Money {
+  // Amount in smallest currency unit (cents for USD, pence for GBP, etc.)
+  int64 amount = 1;
+  Currency currency = 2;
+}
+
+// Payment Method Details
+message PaymentMethodDetails {
+  PaymentMethod method = 1;
+  
+  oneof details {
+    CreditCardDetails credit_card = 2;
+    PayPalDetails paypal = 3;
+    BankTransferDetails bank_transfer = 4;
+    WalletDetails wallet = 5;
+    CryptoDetails crypto = 6;
+  }
+}
+
+message CreditCardDetails {
+  string card_number_masked = 1; // e.g., "**** **** **** 1234"
+  string card_holder_name = 2;
+  string expiry_month = 3;
+  string expiry_year = 4;
+  string card_brand = 5; // Visa, MasterCard, etc.
+  string last_four_digits = 6;
+}
+
+message PayPalDetails {
+  string email = 1;
+  string paypal_transaction_id = 2;
+}
+
+message BankTransferDetails {
+  string bank_name = 1;
+  string account_number_masked = 2;
+  string routing_number = 3;
+}
+
+message WalletDetails {
+  string wallet_provider = 1; // Apple Pay, Google Pay, etc.
+  string wallet_id = 2;
+}
+
+message CryptoDetails {
+  string crypto_currency = 1; // BTC, ETH, etc.
+  string wallet_address = 2;
+  string transaction_hash = 3;
+}
+
+// Billing Address
+message BillingAddress {
+  string street = 1;
+  string city = 2;
+  string state = 3;
+  string zip_code = 4;
+  string country = 5;
+  string country_code = 6; // ISO 3166-1 alpha-2
+}
+
+// Payment Metadata
+message PaymentMetadata {
+  string user_agent = 1;
+  string ip_address = 2;
+  string session_id = 3;
+  map<string, string> custom_fields = 4;
+}
+
+// Main Request/Response Messages
+
+// InitiatePayment
+message InitiatePaymentRequest {
+  string order_id = 1;
+  string user_id = 2;
+  Money amount = 3;
+  PaymentMethodDetails payment_method = 4;
+  BillingAddress billing_address = 5;
+  PaymentMetadata metadata = 6;
+  string description = 7; // Payment description
+  string idempotency_key = 8; // To prevent duplicate payments
+  bool auto_confirm = 9; // Whether to auto-confirm or require manual confirmation
+  int32 expires_in_seconds = 10; // Payment expiry time
+}
+
+message InitiatePaymentResponse {
+  bool success = 1;
+  string payment_id = 2;
+  PaymentStatus status = 3;
+  string client_secret = 4; // For frontend payment confirmation (Stripe style)
+  string redirect_url = 5; // For redirect-based payments
+  string error_message = 6;
+  PaymentErrorCode error_code = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp expires_at = 9;
+}
+
+// GetPaymentStatus
+message GetPaymentStatusRequest {
+  string payment_id = 1;
+}
+
+message GetPaymentStatusResponse {
+  bool success = 1;
+  string payment_id = 2;
+  string order_id = 3;
+  PaymentStatus status = 4;
+  Money amount = 5;
+  string error_message = 6;
+  PaymentErrorCode error_code = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+// ConfirmPayment
+message ConfirmPaymentRequest {
+  string payment_id = 1;
+  string confirmation_token = 2; // For 3D Secure or similar
+}
+
+message ConfirmPaymentResponse {
+  bool success = 1;
+  string payment_id = 2;
+  PaymentStatus status = 3;
+  string error_message = 4;
+  PaymentErrorCode error_code = 5;
+  google.protobuf.Timestamp confirmed_at = 6;
+}
+
+// CancelPayment
+message CancelPaymentRequest {
+  string payment_id = 1;
+  string reason = 2;
+}
+
+message CancelPaymentResponse {
+  bool success = 1;
+  string payment_id = 2;
+  PaymentStatus status = 3;
+  string error_message = 4;
+  google.protobuf.Timestamp cancelled_at = 5;
+}
+
+// ProcessRefund
+message ProcessRefundRequest {
+  string payment_id = 1;
+  Money amount = 2; // Partial refund amount, if not provided, full refund
+  string reason = 3;
+  string idempotency_key = 4;
+}
+
+message ProcessRefundResponse {
+  bool success = 1;
+  string refund_id = 2;
+  string payment_id = 3;
+  Money refund_amount = 4;
+  PaymentStatus payment_status = 5; // Updated payment status
+  string error_message = 6;
+  google.protobuf.Timestamp processed_at = 7;
+}
+
+// GetPaymentDetails
+message GetPaymentDetailsRequest {
+  string payment_id = 1;
+}
+
+message GetPaymentDetailsResponse {
+  bool success = 1;
+  PaymentDetails payment = 2;
+  string error_message = 3;
+}
+
+message PaymentDetails {
+  string payment_id = 1;
+  string order_id = 2;
+  string user_id = 3;
+  Money amount = 4;
+  PaymentStatus status = 5;
+  PaymentMethodDetails payment_method = 6;
+  BillingAddress billing_address = 7;
+  string description = 8;
+  string provider_transaction_id = 9; // Stripe charge ID, PayPal transaction ID, etc.
+  repeated RefundDetails refunds = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+  google.protobuf.Timestamp confirmed_at = 13;
+  PaymentErrorCode error_code = 14;
+  string error_message = 15;
+}
+
+message RefundDetails {
+  string refund_id = 1;
+  Money amount = 2;
+  string reason = 3;
+  string status = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp processed_at = 6;
+}

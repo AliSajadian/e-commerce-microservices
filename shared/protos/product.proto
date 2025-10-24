@@ -42,6 +42,7 @@ message ProductReservationItem {
 message ReserveProductsRequest {
   repeated ProductReservationItem products = 1;
   string reservation_id = 2; // Unique identifier for this reservation
+  string user_id = 3; // ID of the user making the reservation
 }
 
 message ProductReservationResult {

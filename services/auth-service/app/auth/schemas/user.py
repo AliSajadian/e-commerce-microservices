@@ -24,6 +24,22 @@ class UserCreateModel(UserBase):
     password: PasswordStr
     role_ids: Optional[List[uuid.UUID]] = Field(default_factory=list)
 
+class UserUpdateModel(BaseModel):
+    """Schema for updating user information (includes roles, excludes password)"""
+    username: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    avatar: Optional[str] = None
+    is_active: Optional[bool] = None
+    preferred_language: Optional[str] = None
+    timezone: Optional[str] = None
+    role_ids: Optional[List[uuid.UUID]] = Field(default_factory=list)
+
+class UserRoleUpdateModel(BaseModel):
+    """Schema for updating user roles (admin endpoint)"""
+    role_ids: List[uuid.UUID]
+
 class UserResponse(UserBase):
     id: uuid.UUID
 

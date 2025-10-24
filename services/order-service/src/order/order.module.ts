@@ -5,13 +5,13 @@ import { OrderService } from './order.service';
 import { Order } from './models/order.model';
 import { OrderItem } from './models/order.item.model';
 import { ProductModule } from '../product/product.module'; // Import ProductModule
-import { ClientsModule, Transport } from '@nestjs/microservices';
-import { join } from 'path';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
     // This connects our model to the database within this module
     TypeOrmModule.forFeature([Order, OrderItem]),
+    AuthModule,
     ProductModule
   ],
   controllers: [OrderController],

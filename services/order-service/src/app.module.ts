@@ -1,20 +1,17 @@
-import * as path from 'path';
 import { Module } from '@nestjs/common';
-import { ClientsModule, Transport } from '@nestjs/microservices';
-import { join } from 'path';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config'; // Import ConfigModule and ConfigService
-import { Algorithm } from 'jsonwebtoken'; // Import the Algorithm type
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 
 import { OrderModule } from './order/order.module';
-import { JwtStrategy } from './auth/jwt.strategy';
+import { JwtStrategy } from './auth/jwt.strategy'; // Direct import
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ProductModule } from './product/product.module'; // Import the new module
+import { ProductModule } from './product/product.module';
 import { ormConfig } from './config/ormconfig';
 
+console.log('📦 AppModule file is being loaded!'); // Add this log
 
 @Module({
   imports: [
@@ -25,28 +22,31 @@ import { ormConfig } from './config/ormconfig';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async () => {
-        // Use the centralized ormConfig for the TypeOrmModule
         return ormConfig;
       },
     }),
-    OrderModule,
-    PassportModule,
-    ProductModule,
+    PassportModule, // Add this
     JwtModule.registerAsync({
-      imports: [ConfigModule], // Import the ConfigModule
-      useFactory: async (configService: ConfigService) => ({
-        // Use ConfigService to retrieve values
-        secret: configService.get<string>('SECRET_KEY'),
-        signOptions: {
-          expiresIn: `${configService.get<string>('ACCESS_TOKEN_EXPIRE_MINUTES')}m`,
-          // Add the type assertion here to tell TypeScript it's a valid Algorithm
-          algorithm: configService.get<string>('ALGORITHM') as Algorithm, 
-        },
-      }),
-      inject: [ConfigService], // Inject ConfigService into the factory
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => {
+        console.log('🏭 JWT Module factory in AppModule called'); // Add this log
+        return {
+          secret: configService.get<string>('SECRET_KEY'),
+          signOptions: {
+            expiresIn: `${configService.get<string>('ACCESS_TOKEN_EXPIRE_MINUTES')}m`,
+          },
+        };
+      },
+      inject: [ConfigService],
     }),
+    OrderModule,
+    ProductModule,
   ],
   controllers: [AppController],
-  providers: [JwtStrategy, AppService], // Make sure to add JwtStrategy to the providers list
+  providers: [JwtStrategy, AppService], // Put JwtStrategy back here
 })
-export class AppModule {}
+export class AppModule {
+  constructor() {
+    console.log('🏗️ AppModule constructor called'); // Add this log
+  }
+}

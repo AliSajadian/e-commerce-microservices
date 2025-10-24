@@ -1,25 +1,51 @@
-FROM python:3.12-slim
+# Multi-stage build for Auth Service
+FROM python:3.11-slim as builder
 
-# Set the working directory in the container
+# Set working directory
 WORKDIR /app
 
-# Copy the requirements file into the container
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install the dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies
+RUN pip install --no-cache-dir --user -r requirements.txt
 
-# Explicitly handle passlib and bcrypt versions to fix the compatibility issue.
-# Uninstalling them first ensures a clean slate before installing the specific versions.
-RUN pip uninstall -y passlib bcrypt || true && \
-    pip install --no-cache-dir --default-timeout=100 "passlib==1.7.4" "bcrypt==4.0.1"
+# Production stage
+FROM python:3.11-slim
 
-# Copy the application code into the container
+# Set working directory
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python packages from builder
+COPY --from=builder /root/.local /root/.local
+
+# Copy application code
 COPY . .
 
-# Expose both REST and gRPC ports (optional, for documentation)
-EXPOSE 8000
-EXPOSE 50051
+# Make sure scripts are executable
+RUN chmod +x start_servers.py
 
-# Specify the command to run the application
-CMD ["python", "/app/start_servers.py"]
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash app \
+    && chown -R app:app /app
+USER app
+
+# Expose ports
+EXPOSE 8000 50051
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Start the application
+CMD ["python", "start_servers.py"]

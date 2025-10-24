@@ -40,11 +40,13 @@ export class ProductGrpcService implements OnModuleInit {
    */
   reserveProducts(
     products: ProductReservationItem[],
-    reservationId?: string
+    reservation_id?: string,
+    user_id?: string
   ): Observable<ReserveProductsResponse> {
     return this.productService.ReserveProducts({
       products,
-      reservationId
+      reservation_id,
+      user_id
     });
   }
 
@@ -56,7 +58,7 @@ export class ProductGrpcService implements OnModuleInit {
     products: ProductReservationItem[]
   ): Observable<ReleaseReservationResponse> {
     return this.productService.ReleaseReservation({
-      reservationId,
+      reservation_id: reservationId,      
       products
     });
   }

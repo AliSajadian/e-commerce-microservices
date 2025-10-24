@@ -49,23 +49,19 @@ async def lifespan(app: FastAPI):
 
 tags_metadata = [
     {
-        "name": "Auth", 
-        "description": "Routes for operations related to authentication and authorization"
+        "name": "Recommendations", 
+        "description": "Routes for operations related to product recommendations and ML"
     },
-    # {
-    #     "name": "Book Authors",
-    #     "description": "Routes for operations related to authors",
-    # },
-    # {
-    #     "name": "Books",
-    #     "description": "Routes for operations related to books",
-    # },
+    {
+        "name": "Analytics",
+        "description": "Routes for recommendation analytics and model management"
+    },
 ]
 
 # Pass the lifespan context manager to the FastAPI app
 app = FastAPI(
-    title="Auth API", 
-    description="This is authentication and authorization service", 
+    title="Recommendation Service API", 
+    description="This is a ML-based recommendation service for e-commerce products", 
     version="0.0.1", 
     contact={
         "name": "Ali Sajadian",
@@ -82,7 +78,7 @@ app = FastAPI(
 # ... your other FastAPI routes and code ...
 @app.get("/")
 async def read_root():
-    return {"message": "Auth Service REST API is running"}
+    return {"message": "Recommendation Service REST API is running"}
 
 @app.get("/health")
 async def health():

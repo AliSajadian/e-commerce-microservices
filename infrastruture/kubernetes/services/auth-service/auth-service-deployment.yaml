@@ -1,12 +1,12 @@
-
-# Auth Service Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: auth-service-deploy
-  namespace: books-app
+  name: auth-service
+  namespace: ecommerce
+  labels:
+    app: auth-service
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: auth-service
@@ -16,51 +16,117 @@ spec:
         app: auth-service
     spec:
       containers:
-        - name: auth-service
-          image: docker.io/library/auth_service_image:latest # Replace with your image
-          imagePullPolicy: Never
-          ports:
-            - name: http-api
-              containerPort: 8000 # Your FastAPI HTTP port
-            - name: grpc-api
-              containerPort: 50051 # Your gRPC port
-          env:
-            - name: POSTGRES_DB
-              value: "db_auth"
-            - name: POSTGRES_HOST
-              value: "postgresql-auth-svc"
-            - name: POSTGRES_USER
-              value: "postgres"
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: app-secrets
-                  key: POSTGRES_AUTH_PASSWORD   
-            - name: DATABASE_URL        
-              value: "postgresql+psycopg2://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)"
-            - name: ASYNC_DATABASE_URL
-              value: "postgresql+asyncpg://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)"
-          envFrom:
-            - configMapRef:
-                name: app-config # Reference to the ConfigMap         
-            - secretRef:
-                name: app-secrets
-          resources:
-            requests:
-              memory: "128Mi"
-              cpu: "100m"
-            limits:
-              memory: "256Mi"
-              cpu: "200m"
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: http-api
-            initialDelaySeconds: 10
-            periodSeconds: 5
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: http-api
-            initialDelaySeconds: 15
-            periodSeconds: 5
+      - name: auth-service
+        image: auth-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8000
+        - name: grpc
+          containerPort: 50051
+        env:
+        - name: DATABASE_URL
+          value: "postgresql+asyncpg://postgres:$(POSTGRES_PASSWORD)@postgresql:5432/ecommerce"
+        - name: REDIS_URL
+          value: "redis://:$(REDIS_PASSWORD)@redis:6379/0"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ecommerce-secrets
+              key: JWT_SECRET_KEY
+        - name: ALGORITHM
+          valueFrom:
+            configMapKeyRef:
+              name: ecommerce-config
+              key: JWT_ALGORITHM
+        - name: ACCESS_TOKEN_EXPIRE_MINUTES
+          valueFrom:
+            configMapKeyRef:
+              name: ecommerce-config
+              key: ACCESS_TOKEN_EXPIRE_MINUTES
+        - name: REFRESH_EXPIRE_DAYS
+          valueFrom:
+            configMapKeyRef:
+              name: ecommerce-config
+              key: REFRESH_EXPIRE_DAYS
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ecommerce-secrets
+              key: POSTGRES_PASSWORD
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ecommerce-secrets
+              key: REDIS_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: ecommerce
+spec:
+  selector:
+    app: auth-service
+  ports:
+  - name: http
+    port: 8000
+    targetPort: http
+  - name: grpc
+    port: 50051
+    targetPort: grpc
+  type: ClusterIP
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: auth-service-hpa
+  namespace: ecommerce
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: auth-service
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

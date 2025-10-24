@@ -45,3 +45,6 @@ class ProductReservation(Base, Timestamp):
     
     def __repr__(self):
         return f"<ProductReservation(id={self.id}, reservation_id='{self.reservation_id}', product_id={self.product_id}, quantity={self.quantity}, status='{self.status}')>"
+    
+    
+    

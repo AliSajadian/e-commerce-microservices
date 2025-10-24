@@ -56,10 +56,11 @@ export class OrderService implements OnModuleInit {
         this.productService.ReserveProducts({
           products: [{ product_id, quantity }],
           // reservationId will be auto-generated if not provided
+          user_id: 'example-user-id' // In real scenario, pass actual user ID
         })
       );
 
-      if (!reservationResponse?.allReserved) {
+      if (!reservationResponse?.all_reserved) {
         const failedResults = reservationResponse?.results?.filter(r => !r.success) || [];
         const errorMessages = failedResults.map(r => r.message).join(', ');
         return {
@@ -71,7 +72,7 @@ export class OrderService implements OnModuleInit {
       // 4. Create the order (simulate order creation)
       const orderId = `ORDER-${Date.now()}`;
       console.log(`Successfully reserved ${quantity} units of product ${product_id}`);
-      console.log(`Created order ${orderId} with reservation ${reservationResponse.reservationId}`);
+      console.log(`Created order ${orderId} with reservation ${reservationResponse.reservation_id}`);
 
       // In a real scenario, you would:
       // - Save order to database
@@ -83,7 +84,7 @@ export class OrderService implements OnModuleInit {
         status: 'success',
         message: 'Order created successfully',
         orderId,
-        reservationId: reservationResponse.reservationId
+        reservationId: reservationResponse.reservation_id
       };
 
     } catch (error) {
@@ -159,7 +160,7 @@ export class OrderService implements OnModuleInit {
         })
       );
 
-      if (!reservationResponse?.allReserved) {
+      if (!reservationResponse?.all_reserved) {
         const failedResults = reservationResponse?.results?.filter(r => !r.success) || [];
         const errorMessages = failedResults.map(r => `${r.product_id}: ${r.message}`).join(', ');
         return {
@@ -171,13 +172,13 @@ export class OrderService implements OnModuleInit {
       // 4. Create the bulk order
       const orderId = `BULK-ORDER-${Date.now()}`;
       console.log(`Successfully reserved products for bulk order`);
-      console.log(`Created bulk order ${orderId} with reservation ${reservationResponse.reservationId}`);
+      console.log(`Created bulk order ${orderId} with reservation ${reservationResponse.reservation_id}`);
 
       return {
         status: 'success',
         message: 'Bulk order created successfully',
         orderId,
-        reservationId: reservationResponse.reservationId
+        reservationId: reservationResponse.reservation_id
       };
 
     } catch (error) {
@@ -192,17 +193,18 @@ export class OrderService implements OnModuleInit {
   /**
    * Cancel an order and release reservation
    */
-  async cancelOrder(reservationId: string, items: { product_id: string; quantity: number }[]): Promise<{
+  async cancelOrder(reservationId: string, items: { product_id: string; quantity: number, reservation_id: string }[]): Promise<{
     status: string;
     message: string;
   }> {
     try {
       const releaseResponse = await lastValueFrom(
         this.productService.ReleaseReservation({
-          reservationId,
+          reservation_id: reservationId,  
           products: items.map(item => ({
             product_id: item.product_id,
-            quantity: item.quantity
+            quantity: item.quantity,
+            reservation_id: item.reservation_id
           }))
         })
       );

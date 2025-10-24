@@ -4,6 +4,8 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -63,6 +65,32 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
+
+  // Connect gRPC microservice
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.GRPC,
+    options: {
+      package: 'order',
+      protoPath: join(__dirname, '../proto/order.proto'),
+      url: '0.0.0.0:50051',
+    },
+  });
+
+  // Connect Kafka microservice
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.KAFKA,
+    options: {
+      client: {
+        clientId: 'order-service',
+        brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
+      },
+      consumer: {
+        groupId: 'order-service-group',
+      },
+    },
+  });
+
+  await app.startAllMicroservices();
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
